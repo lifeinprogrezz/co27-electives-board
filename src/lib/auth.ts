@@ -54,6 +54,47 @@ export async function signInWithMagicLink(
   return { ok: true, email: raw }
 }
 
+export type VerifyOtpState =
+  | { ok: false; error: string }
+  | undefined
+
+export async function verifyEmailOtp(
+  _prev: VerifyOtpState,
+  formData: FormData,
+): Promise<VerifyOtpState> {
+  const email = (formData.get('email') ?? '').toString().trim().toLowerCase()
+  const token = (formData.get('token') ?? '').toString().replace(/\D+/g, '')
+
+  if (!email || token.length !== 6) {
+    return { ok: false, error: 'Enter the 6-digit code from the email.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  })
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  // Determine landing based on whether profile is complete.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('cohort_section')
+      .eq('id', user.id)
+      .maybeSingle()
+    redirect(profile?.cohort_section ? '/board' : '/profile')
+  }
+  redirect('/profile')
+}
+
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()

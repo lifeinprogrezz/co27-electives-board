@@ -31,7 +31,8 @@ export function LoginForm() {
         type="email"
         required
         autoComplete="email"
-        placeholder="name@esade.edu"
+        placeholder="name@alumni.esade.edu"
+        defaultValue={state?.ok === false ? state.lastEmail ?? '' : ''}
         className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
       />
       {state?.ok === false && (
@@ -45,7 +46,8 @@ export function LoginForm() {
         {pending ? 'Sending…' : 'Email me a magic link'}
       </button>
       <p className="text-xs text-zinc-500">
-        Only <span className="font-mono">@esade.edu</span> emails can sign in.
+        Only ESADE emails (<span className="font-mono">@alumni.esade.edu</span> or{' '}
+        <span className="font-mono">@esade.edu</span>) can sign in.
       </p>
     </form>
   )

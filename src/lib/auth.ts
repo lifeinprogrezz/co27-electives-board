@@ -7,9 +7,11 @@ import { createClient } from '@/lib/supabase/server'
 
 const EmailSchema = z.email()
 
+const ALLOWED_DOMAINS = ['@alumni.esade.edu', '@esade.edu'] as const
+
 export type SignInState =
   | { ok: true; email: string }
-  | { ok: false; error: string }
+  | { ok: false; error: string; lastEmail?: string }
   | undefined
 
 export async function signInWithMagicLink(
@@ -20,10 +22,14 @@ export async function signInWithMagicLink(
 
   const valid = EmailSchema.safeParse(raw)
   if (!valid.success) {
-    return { ok: false, error: 'Please enter a valid email address.' }
+    return { ok: false, error: 'Please enter a valid email address.', lastEmail: raw }
   }
-  if (!raw.endsWith('@esade.edu')) {
-    return { ok: false, error: 'Use your @esade.edu email to sign in.' }
+  if (!ALLOWED_DOMAINS.some((d) => raw.endsWith(d))) {
+    return {
+      ok: false,
+      error: 'Use your ESADE email to sign in (@alumni.esade.edu or @esade.edu).',
+      lastEmail: raw,
+    }
   }
 
   const supabase = await createClient()
@@ -43,7 +49,7 @@ export async function signInWithMagicLink(
   })
 
   if (error) {
-    return { ok: false, error: error.message }
+    return { ok: false, error: error.message, lastEmail: raw }
   }
   return { ok: true, email: raw }
 }

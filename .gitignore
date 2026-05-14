@@ -37,9 +37,15 @@ yarn-error.log*
 # claude
 .claude/
 
+# Playwright smoke-test artifacts
+.playwright-mcp/
+*.png
+!public/*.png
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*.local

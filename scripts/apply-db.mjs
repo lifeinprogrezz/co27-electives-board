@@ -21,10 +21,15 @@ if (!url) {
 
 const includeSeed = process.argv.includes('--seed')
 
+// Strip sslmode from the connection string so we can pass ssl options
+// explicitly — Supabase ships a self-signed cert chain.
+const parsed = new URL(url)
+parsed.searchParams.delete('sslmode')
+const isLocal = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
+
 const client = new pg.Client({
-  connectionString: url,
-  // Supabase pooled connections require SSL; the non-pooling URL works either way.
-  ssl: url.includes('localhost') ? false : { rejectUnauthorized: false },
+  connectionString: parsed.toString(),
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 })
 
 await client.connect()

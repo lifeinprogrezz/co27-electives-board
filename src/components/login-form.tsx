@@ -65,8 +65,8 @@ function OtpStep({ email }: { email: string }) {
       <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
         <p className="font-medium">Check your inbox.</p>
         <p className="mt-1">
-          We sent a sign-in code to <span className="font-mono">{email}</span>. Open it on
-          any device.
+          We sent a 6-digit sign-in code to <span className="font-mono">{email}</span>.
+          The email contains <em>only</em> the code — no link to click. Paste it below.
         </p>
       </div>
 
@@ -98,8 +98,8 @@ function OtpStep({ email }: { email: string }) {
           {verifying ? 'Verifying…' : 'Sign in'}
         </button>
         <p className="text-xs text-zinc-500">
-          You can also click the magic link in the email — but pasting the code is
-          recommended (some email systems pre-fetch links and invalidate them).
+          Code expires in an hour. Didn&apos;t arrive? Check spam, then{' '}
+          <a href="/login" className="underline">try again</a>.
         </p>
       </form>
     </div>

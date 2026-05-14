@@ -70,11 +70,15 @@ export async function verifyEmailOtp(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: 'email',
-  })
+
+  // signInWithOtp stores the OTP under one of two token types depending on whether
+  // the user is new or existing: 'email' (confirmation_token) or 'magiclink'
+  // (recovery_token). verifyOtp requires the matching type, so try both.
+  let { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+  if (error) {
+    const retry = await supabase.auth.verifyOtp({ email, token, type: 'magiclink' })
+    error = retry.error
+  }
 
   if (error) {
     return { ok: false, error: error.message }

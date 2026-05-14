@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Co27 Electives Trading Board
 
-## Getting Started
+Peer-built tool for Co27 ESADE MBA students to coordinate elective trades during
+Add/Drop. See [`SPEC.md`](./SPEC.md) for the full build spec.
 
-First, run the development server:
+> Built by Rober Quintero, Co27. Not affiliated with ESADE.
+
+## Stack
+
+- Next.js 16 App Router (TypeScript, Tailwind 4)
+- Supabase (Auth, Postgres, RLS)
+- Vercel (hosting)
+
+## First-time setup
+
+### 1. Create a Supabase project
+
+1. Go to <https://supabase.com> → New project → name it `co27-electives-board`.
+2. From **Settings → API**, copy the **Project URL**, **anon public** key, and the
+   **service_role** key.
+
+### 2. Configure environment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon public key
+- `SUPABASE_SERVICE_ROLE_KEY` — service_role key (server-only, used for seeding)
+- `NEXT_PUBLIC_SITE_URL` — `http://localhost:3000` for dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Run the schema + seed
 
-## Learn More
+Open the Supabase SQL editor (**SQL → New query**) and run, in order:
 
-To learn more about Next.js, take a look at the following resources:
+1. The contents of `supabase/migrations/0001_init.sql`
+2. The contents of `supabase/seed.sql`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This creates the `users`, `courses`, `listings` tables, enables RLS, installs the
+signup trigger, and seeds the elective catalog.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Configure Supabase Auth
 
-## Deploy on Vercel
+In **Authentication → URL Configuration**:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Site URL**: `http://localhost:3000` (add the production URL once you deploy)
+- **Redirect URLs**: include `http://localhost:3000/auth/callback` and any
+  production callback (e.g. `https://board.lifeinprogrezz.com/auth/callback`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+In **Authentication → Providers → Email**, ensure **Enable Email provider** is on
+and **Confirm email** is on (magic-link mode).
+
+### 5. Install + run
+
+```bash
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000>, sign in with an `@esade.edu` email, click the link
+in your inbox.
+
+## Deploying to Vercel
+
+1. Import the repo on Vercel (`vercel.com/new`).
+2. Add the same four env vars under **Settings → Environment Variables**.
+3. Update Supabase **Site URL** and **Redirect URLs** with the production domain.
+4. Deploy.
+
+## Project layout
+
+```
+proxy.ts                      # Next 16 proxy — was middleware.ts
+src/
+  app/                        # routes
+    auth/callback/route.ts    # magic-link handler
+    profile/                  # onboarding + edit (auth-gated)
+    board/                    # public board (auth-gated)
+    login/                    # magic-link form
+  components/                 # client components
+  lib/
+    supabase/{server,client,proxy}.ts
+    auth.ts                   # signIn / signOut server actions
+    profile.ts                # saveProfile server action
+    dal.ts                    # requireUser / getCurrentProfile
+    types.ts
+supabase/
+  migrations/0001_init.sql    # schema + RLS + triggers
+  seed.sql                    # course catalog
+```
+
+## Scripts
+
+- `npm run dev` — local dev server (Turbopack)
+- `npm run build` — production build
+- `npm run start` — run the production build
+- `npm run lint` — ESLint

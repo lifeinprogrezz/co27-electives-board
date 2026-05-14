@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #18181b;
+  --font-sans: var(--font-sans);
+  --color-accent: #c8102e; /* ESADE red */
+}
+
+html, body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Mobile-first: ensure inputs don't get auto-zoom on iOS */
+input, select, textarea, button {
+  font-size: 16px;
+}

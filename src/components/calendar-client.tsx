@@ -140,7 +140,7 @@ export function CalendarClient({ rows }: Props) {
     return m
   }, [gridRows, codeByCourse])
 
-  /** Which rows have at least one session in YYYY-MM month. */
+  /** Which day-grid rows have at least one session in YYYY-MM month. */
   const rowsByMonth = useMemo(() => {
     const m = new Map<string, CalendarRow[]>()
     for (const r of gridRows) {
@@ -155,6 +155,25 @@ export function CalendarClient({ rows }: Props) {
     }
     return m
   }, [gridRows])
+
+  /** Continuous (online/long-range) rows active in each month. */
+  const continuousByMonth = useMemo(() => {
+    const m = new Map<string, CalendarRow[]>()
+    for (const r of otherRows) {
+      if (!r.start_date || !r.end_date) continue
+      for (const month of MONTHS) {
+        const monthStart = new Date(Date.UTC(month.year, month.monthIdx, 1))
+        const monthEnd = new Date(Date.UTC(month.year, month.monthIdx + 1, 0))
+        const courseStart = new Date(`${r.start_date}T00:00:00Z`)
+        const courseEnd = new Date(`${r.end_date}T00:00:00Z`)
+        if (courseEnd < monthStart || courseStart > monthEnd) continue
+        const key = `${month.year}-${String(month.monthIdx + 1).padStart(2, '0')}`
+        if (!m.has(key)) m.set(key, [])
+        m.get(key)!.push(r)
+      }
+    }
+    return m
+  }, [otherRows])
 
   if (rows.length === 0) {
     return (
@@ -181,18 +200,18 @@ export function CalendarClient({ rows }: Props) {
     <div className="flex flex-col gap-5">
       <Legend counts={counts} />
 
-      {otherRows.length > 0 && <OtherCommitments rows={otherRows} />}
-
       <div className="flex flex-col gap-7">
         {MONTHS.map((m) => {
           const monthKey = `${m.year}-${String(m.monthIdx + 1).padStart(2, '0')}`
           const inMonth = rowsByMonth.get(monthKey) ?? []
+          const continuousInMonth = continuousByMonth.get(monthKey) ?? []
           return (
             <MonthBlock
               key={monthKey}
               month={m}
               byDate={byDate}
               monthRows={inMonth}
+              continuousRows={continuousInMonth}
               selectedDay={selectedDay}
               setSelectedDay={setSelectedDay}
             />
@@ -213,12 +232,14 @@ function MonthBlock({
   month,
   byDate,
   monthRows,
+  continuousRows,
   selectedDay,
   setSelectedDay,
 }: {
   month: MonthDef
   byDate: Map<string, DayBuckets>
   monthRows: CalendarRow[]
+  continuousRows: CalendarRow[]
   selectedDay: string | null
   setSelectedDay: (d: string | null) => void
 }) {
@@ -240,13 +261,16 @@ function MonthBlock({
   }
   while (cells.length % 5 !== 0) cells.push(null)
 
-  // Group monthRows by status for the header summary.
+  // Group monthRows + continuousRows by status for the header summary.
+  // Continuous rows get a "(online)" or "(continuous)" suffix in the line.
+  const allInMonth = [...monthRows, ...continuousRows]
   const groups = {
-    kept: monthRows.filter((r) => r.status === 'kept'),
-    dropping: monthRows.filter((r) => r.status === 'dropping'),
-    adding: monthRows.filter((r) => r.status === 'adding'),
+    kept: allInMonth.filter((r) => r.status === 'kept'),
+    dropping: allInMonth.filter((r) => r.status === 'dropping'),
+    adding: allInMonth.filter((r) => r.status === 'adding'),
   }
-  const hasAny = monthRows.length > 0
+  const continuousIds = new Set(continuousRows.map((r) => r.id))
+  const hasAny = allInMonth.length > 0
 
   // Selected day buckets (for the detail flyout).
   const selectedBuckets =
@@ -265,12 +289,28 @@ function MonthBlock({
         </div>
         {hasAny && (
           <div className="flex flex-col gap-1 text-[11px] sm:text-xs">
-            <MonthGroupLine status="kept" rows={groups.kept} />
-            <MonthGroupLine status="dropping" rows={groups.dropping} />
-            <MonthGroupLine status="adding" rows={groups.adding} />
+            <MonthGroupLine
+              status="kept"
+              rows={groups.kept}
+              continuousIds={continuousIds}
+            />
+            <MonthGroupLine
+              status="dropping"
+              rows={groups.dropping}
+              continuousIds={continuousIds}
+            />
+            <MonthGroupLine
+              status="adding"
+              rows={groups.adding}
+              continuousIds={continuousIds}
+            />
           </div>
         )}
       </header>
+
+      {continuousRows.length > 0 && (
+        <ContinuousTracks rows={continuousRows} month={month} />
+      )}
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
         <div className="grid grid-cols-5 border-b border-zinc-200 bg-zinc-50">
@@ -313,9 +353,11 @@ function MonthBlock({
 function MonthGroupLine({
   status,
   rows,
+  continuousIds,
 }: {
   status: CalendarStatus
   rows: CalendarRow[]
+  continuousIds: Set<string>
 }) {
   if (rows.length === 0) return null
   const style = STATUS_STYLE[status]
@@ -330,9 +372,68 @@ function MonthGroupLine({
           <span key={r.id}>
             {i > 0 ? ', ' : ''}
             <span className={style.text}>{r.name}</span>
+            {continuousIds.has(r.id) && (
+              <span className="text-zinc-400"> (continuous)</span>
+            )}
           </span>
         ))}
       </span>
+    </div>
+  )
+}
+
+function ContinuousTracks({
+  rows,
+  month,
+}: {
+  rows: CalendarRow[]
+  month: MonthDef
+}) {
+  // Render each continuous course as a horizontal bar spanning the days it
+  // occupies in THIS month (clipped to month boundaries).
+  const monthStart = new Date(Date.UTC(month.year, month.monthIdx, 1))
+  const monthEnd = new Date(Date.UTC(month.year, month.monthIdx + 1, 0))
+  const daysInMonth = monthEnd.getUTCDate()
+
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+        Continuous tracks (online / long-range)
+      </span>
+      <ul className="flex flex-col gap-1.5">
+        {rows.map((r) => {
+          const courseStart = new Date(`${r.start_date}T00:00:00Z`)
+          const courseEnd = new Date(`${r.end_date}T00:00:00Z`)
+          const clippedStart = courseStart < monthStart ? monthStart : courseStart
+          const clippedEnd = courseEnd > monthEnd ? monthEnd : courseEnd
+          const startDay = clippedStart.getUTCDate()
+          const endDay = clippedEnd.getUTCDate()
+          const leftPct = ((startDay - 1) / daysInMonth) * 100
+          const widthPct = ((endDay - startDay + 1) / daysInMonth) * 100
+          const s = STATUS_STYLE[r.status]
+          return (
+            <li
+              key={r.id}
+              className="flex flex-col gap-1"
+              title={`${r.name} · ${r.schedule_text ?? `${r.start_date} → ${r.end_date}`} · ${s.label}`}
+            >
+              <div className="relative h-5 rounded bg-white">
+                <div
+                  className={`absolute top-0 h-full rounded ${s.solid} flex items-center px-1.5`}
+                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                >
+                  <span className="truncate text-[10px] font-semibold text-white">
+                    {r.name}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] text-zinc-500">
+                {r.schedule_text ?? `${r.start_date} → ${r.end_date}`}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
@@ -489,36 +590,6 @@ function SlotDetailRow({ label, tags }: { label: string; tags: Tag[] }) {
         </ul>
       )}
     </div>
-  )
-}
-
-function OtherCommitments({ rows }: { rows: CalendarRow[] }) {
-  return (
-    <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-600">
-        Other commitments (online / long-range)
-      </h3>
-      <ul className="flex flex-col gap-1.5">
-        {rows.map((r) => {
-          const s = STATUS_STYLE[r.status]
-          return (
-            <li key={r.id} className="flex items-start gap-2 text-xs">
-              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
-              <span className="flex-1">
-                <span className={`font-medium ${s.text}`}>{r.name}</span>
-                <span className="text-zinc-500">
-                  {' · '}
-                  {r.schedule_text ?? `${r.start_date} → ${r.end_date}`}
-                </span>
-              </span>
-              <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${s.badge}`}>
-                {s.label}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
   )
 }
 

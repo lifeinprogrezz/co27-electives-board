@@ -7,7 +7,7 @@ export default function AboutPage() {
         ← Home
       </Link>
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">About</h1>
-      <div className="prose prose-zinc max-w-none text-sm leading-relaxed text-zinc-700">
+      <div className="flex flex-col gap-3 text-sm leading-relaxed text-zinc-700">
         <p>
           Add/Drop is a refresh-and-hope game on eOffice. The cohort is already trading
           electives over WhatsApp DMs — there&apos;s just no central place to see who
@@ -28,7 +28,7 @@ export default function AboutPage() {
           >
             Rober Quintero
           </a>{' '}
-          (Co27, Section 1). Not affiliated with ESADE. Open feedback welcome.
+          (Co27). Not affiliated with ESADE. Open feedback welcome.
         </p>
       </div>
     </div>

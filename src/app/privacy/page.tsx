@@ -37,8 +37,8 @@ export default function PrivacyPage() {
 
         <h2 className="mt-3 text-base font-medium text-zinc-900">Contact</h2>
         <p>
-          Questions or deletion requests: WhatsApp Rober Quintero (Co27, Section 1) or
-          email <span className="font-mono">hello@lifeinprogrezz.com</span>.
+          Questions or deletion requests: WhatsApp Rober Quintero (Co27) or email{' '}
+          <span className="font-mono">hello@lifeinprogrezz.com</span>.
         </p>
       </section>
     </div>

@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { TERM_LABELS, type Term } from '@/lib/types'
+import { closeListing, deleteListing } from '@/lib/listings'
 
 export interface BoardCourse {
   id: string
@@ -34,12 +35,7 @@ interface Props {
 
 export function BoardClient({ currentUserId, courses, listings }: Props) {
   const [q, setQ] = useState('')
-
-  const courseById = useMemo(() => {
-    const m = new Map<string, BoardCourse>()
-    for (const c of courses) m.set(c.id, c)
-    return m
-  }, [courses])
+  const [courseFilter, setCourseFilter] = useState<string>('all')
 
   const courseIdsWithListings = useMemo(() => {
     const s = new Set<string>()
@@ -51,6 +47,7 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
     const term = q.trim().toLowerCase()
     return courses
       .filter((c) => courseIdsWithListings.has(c.id))
+      .filter((c) => (courseFilter === 'all' ? true : c.id === courseFilter))
       .filter((c) => {
         if (!term) return true
         return (
@@ -59,7 +56,7 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
           (c.professor ?? '').toLowerCase().includes(term)
         )
       })
-  }, [courses, courseIdsWithListings, q])
+  }, [courses, courseIdsWithListings, q, courseFilter])
 
   const listingsByCourse = useMemo(() => {
     const m: Record<string, { drop: BoardListing[]; add: BoardListing[] }> = {}
@@ -73,6 +70,12 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
 
   const totalDrops = listings.filter((l) => l.type === 'have_want_drop').length
   const totalAdds = listings.filter((l) => l.type === 'want_add').length
+
+  const coursesByTerm = useMemo(() => {
+    const m: Record<Term, BoardCourse[]> = { summer: [], september: [], term4: [] }
+    for (const c of courses) m[c.term].push(c)
+    return m
+  }, [courses])
 
   if (listings.length === 0) {
     return (
@@ -90,18 +93,38 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-zinc-500">
           <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
           <span className="font-medium text-emerald-700">{totalAdds}</span> adds
         </p>
-        <input
-          type="search"
-          placeholder="Filter by course or professor…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="w-full max-w-xs rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            value={courseFilter}
+            onChange={(e) => setCourseFilter(e.target.value)}
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-auto"
+          >
+            <option value="all">All courses</option>
+            {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+              coursesByTerm[term].length === 0 ? null : (
+                <optgroup key={term} label={TERM_LABELS[term]}>
+                  {coursesByTerm[term].map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ),
+            )}
+          </select>
+          <input
+            type="search"
+            placeholder="Search name or professor…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-56"
+          />
+        </div>
       </div>
 
       {filteredCourses.length === 0 ? (
@@ -137,6 +160,14 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
           })}
         </div>
       )}
+
+      <p className="mt-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-center text-xs text-zinc-600">
+        Don&apos;t see your course?{' '}
+        <Link href="/profile" className="font-medium underline">
+          Edit your profile
+        </Link>{' '}
+        to post your drop or add.
+      </p>
     </div>
   )
 }
@@ -219,6 +250,8 @@ function ListingColumn({
 
 function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   const [revealed, setRevealed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
   const u = listing.user
   const name = u.name?.trim() || u.email.split('@')[0]
   const waDigits = (u.whatsapp_number ?? '').replace(/\D+/g, '')
@@ -226,32 +259,71 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   const contactHref = hasWa ? `https://wa.me/${waDigits}` : `mailto:${u.email}`
   const contactLabel = hasWa ? 'WhatsApp' : 'Email'
 
+  function onClose() {
+    setError(null)
+    startTransition(async () => {
+      const result = await closeListing(listing.id)
+      if (result?.ok === false) setError(result.error)
+    })
+  }
+
+  function onDelete() {
+    if (!confirm('Delete this listing? This cannot be undone.')) return
+    setError(null)
+    startTransition(async () => {
+      const result = await deleteListing(listing.id)
+      if (result?.ok === false) setError(result.error)
+    })
+  }
+
   return (
-    <li className="flex items-center justify-between gap-2 rounded-md bg-zinc-50 px-2 py-1.5 text-sm">
-      <span className="flex flex-col leading-tight">
-        <span className="font-medium text-zinc-900">{name}</span>
-        {isMe && <span className="text-[11px] text-zinc-500">you</span>}
-      </span>
-      {isMe ? (
-        <span className="text-[11px] text-zinc-400">your post</span>
-      ) : revealed ? (
-        <a
-          href={contactHref}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-md border border-zinc-900 bg-zinc-900 px-2 py-1 text-xs font-medium text-white"
-        >
-          {contactLabel}
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setRevealed(true)}
-          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
-        >
-          Show contact
-        </button>
-      )}
+    <li className="flex flex-col gap-1 rounded-md bg-zinc-50 px-2 py-1.5 text-sm">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex flex-col leading-tight">
+          <span className="font-medium text-zinc-900">{name}</span>
+          {isMe && <span className="text-[11px] text-zinc-500">you</span>}
+        </span>
+        {isMe ? (
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+              title="Mark this listing as done; it stops showing on the board."
+            >
+              Done
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isPending}
+              aria-label="Delete listing"
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+            >
+              ✕
+            </button>
+          </div>
+        ) : revealed ? (
+          <a
+            href={contactHref}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-md border border-zinc-900 bg-zinc-900 px-2 py-1 text-xs font-medium text-white"
+          >
+            {contactLabel}
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setRevealed(true)}
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+          >
+            Show contact
+          </button>
+        )}
+      </div>
+      {error && <span className="text-[11px] text-red-600">{error}</span>}
     </li>
   )
 }

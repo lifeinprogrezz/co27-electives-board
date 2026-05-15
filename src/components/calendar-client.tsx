@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 export type CalendarStatus = 'kept' | 'dropping' | 'adding'
 export type CourseSlot = 'AM' | 'PM' | 'AM+PM' | 'online' | 'fri-pm' | 'special'
@@ -14,14 +14,14 @@ export interface CalendarRow {
   slot: CourseSlot | null
   start_date: string
   end_date: string
-  session_dates: string[] // YYYY-MM-DD list
+  session_dates: string[]
   status: CalendarStatus
 }
 
 interface MonthDef {
   name: string
   year: number
-  monthIdx: number // 0-based
+  monthIdx: number
 }
 
 const MONTHS: MonthDef[] = [
@@ -38,34 +38,50 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
 const STATUS_STYLE: Record<
   CalendarStatus,
-  { bar: string; badge: string; dot: string; label: string }
+  {
+    solid: string
+    softBg: string
+    border: string
+    text: string
+    dot: string
+    badge: string
+    label: string
+  }
 > = {
   kept: {
-    bar: 'bg-zinc-500',
-    dot: 'bg-zinc-500',
-    badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+    solid: 'bg-sky-500',
+    softBg: 'bg-sky-50',
+    border: 'border-sky-300',
+    text: 'text-sky-900',
+    dot: 'bg-sky-500',
+    badge: 'bg-sky-50 text-sky-800 border-sky-200',
     label: 'Keeping',
   },
   dropping: {
-    bar: 'bg-red-500',
-    dot: 'bg-red-500',
-    badge: 'bg-red-50 text-red-700 border-red-200',
+    solid: 'bg-rose-500',
+    softBg: 'bg-rose-50',
+    border: 'border-rose-300',
+    text: 'text-rose-900',
+    dot: 'bg-rose-500',
+    badge: 'bg-rose-50 text-rose-800 border-rose-200',
     label: 'Dropping',
   },
   adding: {
-    bar: 'bg-emerald-500',
+    solid: 'bg-emerald-500',
+    softBg: 'bg-emerald-50',
+    border: 'border-emerald-300',
+    text: 'text-emerald-900',
     dot: 'bg-emerald-500',
-    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     label: 'Adding',
   },
 }
 
-/** Tag = one course's claim on a given (date, slot-half). */
 interface Tag {
   rowId: string
   name: string
+  code: string
   status: CalendarStatus
-  isFullDay: boolean
 }
 
 interface DayBuckets {
@@ -77,50 +93,67 @@ interface Props {
   rows: CalendarRow[]
 }
 
+function abbreviate(name: string): string {
+  // First letter of each non-trivial word, max 3 chars.
+  const ignore = new Set(['the', 'and', 'of', 'in', 'on', 'a', 'to', 'for', '&'])
+  const cleaned = name
+    .replace(/\(.*?\)/g, '') // strip parens
+    .replace(/[:,]/g, ' ')
+  const parts = cleaned
+    .split(/\s+/)
+    .filter((p) => p && !ignore.has(p.toLowerCase()))
+  const letters = parts.map((p) => p[0]?.toUpperCase() ?? '').filter(Boolean)
+  return letters.slice(0, 3).join('') || name.slice(0, 3).toUpperCase()
+}
+
 export function CalendarClient({ rows }: Props) {
-  /** Day-grid courses: have session_dates AND a non-flexible slot. */
+  // selectedDay holds a YYYY-MM-DD when the user taps a day; null otherwise.
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+
   const gridRows = rows.filter(
     (r) => r.session_dates.length > 0 && r.slot && r.slot !== 'online',
   )
-  /** Long-range / online / undated courses go to a separate strip. */
   const otherRows = rows.filter(
-    (r) =>
-      r.session_dates.length === 0 ||
-      r.slot === 'online' ||
-      !r.slot,
+    (r) => r.session_dates.length === 0 || r.slot === 'online' || !r.slot,
   )
 
-  /** Index sessions by date → AM/PM. */
+  const codeByCourse = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const r of rows) m.set(r.id, abbreviate(r.name))
+    return m
+  }, [rows])
+
   const byDate = useMemo(() => {
     const m = new Map<string, DayBuckets>()
     for (const r of gridRows) {
       const slot = r.slot ?? 'special'
+      const code = codeByCourse.get(r.id) ?? ''
       for (const d of r.session_dates) {
         if (!m.has(d)) m.set(d, { am: [], pm: [] })
         const b = m.get(d)!
-        const tag: Tag = {
-          rowId: r.id,
-          name: r.name,
-          status: r.status,
-          isFullDay: slot === 'AM+PM' || slot === 'special',
-        }
+        const tag: Tag = { rowId: r.id, name: r.name, code, status: r.status }
         if (slot === 'AM' || slot === 'AM+PM' || slot === 'special') b.am.push(tag)
         if (slot === 'PM' || slot === 'AM+PM' || slot === 'fri-pm' || slot === 'special')
           b.pm.push(tag)
       }
     }
     return m
-  }, [gridRows])
+  }, [gridRows, codeByCourse])
 
-  /** Per-month: does it have any sessions? */
-  const monthHasSessions = useMemo(() => {
-    const set = new Set<string>()
-    for (const r of gridRows)
+  /** Which rows have at least one session in YYYY-MM month. */
+  const rowsByMonth = useMemo(() => {
+    const m = new Map<string, CalendarRow[]>()
+    for (const r of gridRows) {
+      const seen = new Set<string>()
       for (const d of r.session_dates) {
-        const key = d.slice(0, 7) // YYYY-MM
-        set.add(key)
+        const key = d.slice(0, 7)
+        if (seen.has(key)) continue
+        seen.add(key)
+        if (!m.has(key)) m.set(key, [])
+        m.get(key)!.push(r)
       }
-    return set
+    }
+    return m
   }, [gridRows])
 
   if (rows.length === 0) {
@@ -150,25 +183,27 @@ export function CalendarClient({ rows }: Props) {
 
       {otherRows.length > 0 && <OtherCommitments rows={otherRows} />}
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-7">
         {MONTHS.map((m) => {
           const monthKey = `${m.year}-${String(m.monthIdx + 1).padStart(2, '0')}`
-          const hasSessions = monthHasSessions.has(monthKey)
+          const inMonth = rowsByMonth.get(monthKey) ?? []
           return (
             <MonthBlock
               key={monthKey}
               month={m}
               byDate={byDate}
-              hasSessions={hasSessions}
+              monthRows={inMonth}
+              selectedDay={selectedDay}
+              setSelectedDay={setSelectedDay}
             />
           )
         })}
       </div>
 
       <p className="text-[11px] leading-relaxed text-zinc-500">
-        Top half of each day cell = morning (AM), bottom half = afternoon (PM). When
-        two courses claim the same slot on the same day, they appear side by side —
-        that&apos;s a clash. Tap a day for course names.
+        Top half of each day = morning (AM); bottom half = afternoon (PM). Two
+        courses in the same slot = side-by-side strips = clash. Tap any day for
+        full details.
       </p>
     </div>
   )
@@ -177,26 +212,24 @@ export function CalendarClient({ rows }: Props) {
 function MonthBlock({
   month,
   byDate,
-  hasSessions,
+  monthRows,
+  selectedDay,
+  setSelectedDay,
 }: {
   month: MonthDef
   byDate: Map<string, DayBuckets>
-  hasSessions: boolean
+  monthRows: CalendarRow[]
+  selectedDay: string | null
+  setSelectedDay: (d: string | null) => void
 }) {
-  // Build the weekday cells for this month. Mon-Fri only (no weekend electives).
-  // Each row is a calendar week. We always start from the first Monday on/before day 1.
   const firstDay = new Date(Date.UTC(month.year, month.monthIdx, 1))
   const lastDay = new Date(Date.UTC(month.year, month.monthIdx + 1, 0))
   const daysInMonth = lastDay.getUTCDate()
-
-  // 1 = Monday … 5 = Friday … 7 = Sunday. We want offset to align day 1 under its column.
-  const firstWeekday = firstDay.getUTCDay() || 7 // 0 (Sun) → 7
-  const startOffset = firstWeekday <= 5 ? firstWeekday - 1 : 0 // weekend → push to next Mon
+  const firstWeekday = firstDay.getUTCDay() || 7
+  const startOffset = firstWeekday <= 5 ? firstWeekday - 1 : 0
 
   const cells: ({ day: number; iso: string } | null)[] = []
-  if (firstWeekday <= 5) {
-    for (let i = 0; i < startOffset; i++) cells.push(null)
-  }
+  if (firstWeekday <= 5) for (let i = 0; i < startOffset; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) {
     const dt = new Date(Date.UTC(month.year, month.monthIdx, d))
     const wd = dt.getUTCDay() || 7
@@ -205,22 +238,41 @@ function MonthBlock({
       cells.push({ day: d, iso })
     }
   }
-  // Pad to multiple of 5.
   while (cells.length % 5 !== 0) cells.push(null)
 
+  // Group monthRows by status for the header summary.
+  const groups = {
+    kept: monthRows.filter((r) => r.status === 'kept'),
+    dropping: monthRows.filter((r) => r.status === 'dropping'),
+    adding: monthRows.filter((r) => r.status === 'adding'),
+  }
+  const hasAny = monthRows.length > 0
+
+  // Selected day buckets (for the detail flyout).
+  const selectedBuckets =
+    selectedDay && selectedDay.startsWith(`${month.year}-${String(month.monthIdx + 1).padStart(2, '0')}`)
+      ? byDate.get(selectedDay) ?? null
+      : null
+
   return (
-    <section className="flex flex-col gap-2">
-      <header className="flex items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
-          {month.name} {month.year}
-        </h2>
-        {!hasSessions && (
-          <span className="text-[11px] text-zinc-400">no sessions</span>
+    <section className="flex flex-col gap-2.5">
+      <header className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
+            {month.name} {month.year}
+          </h2>
+          {!hasAny && <span className="text-[11px] text-zinc-400">no sessions</span>}
+        </div>
+        {hasAny && (
+          <div className="flex flex-col gap-1 text-[11px] sm:text-xs">
+            <MonthGroupLine status="kept" rows={groups.kept} />
+            <MonthGroupLine status="dropping" rows={groups.dropping} />
+            <MonthGroupLine status="adding" rows={groups.adding} />
+          </div>
         )}
       </header>
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        {/* Weekday header */}
         <div className="grid grid-cols-5 border-b border-zinc-200 bg-zinc-50">
           {WEEKDAY_LABELS.map((w) => (
             <div
@@ -232,82 +284,210 @@ function MonthBlock({
           ))}
         </div>
 
-        {/* Day cells */}
         <div className="grid grid-cols-5">
           {cells.map((cell, idx) => (
             <DayCell
               key={idx}
               cell={cell}
               buckets={cell ? byDate.get(cell.iso) ?? null : null}
+              isSelected={cell?.iso === selectedDay}
+              onSelect={() =>
+                cell && setSelectedDay(cell.iso === selectedDay ? null : cell.iso)
+              }
             />
           ))}
         </div>
       </div>
+
+      {selectedBuckets && selectedDay && (
+        <SelectedDayDetail
+          iso={selectedDay}
+          buckets={selectedBuckets}
+          onClose={() => setSelectedDay(null)}
+        />
+      )}
     </section>
+  )
+}
+
+function MonthGroupLine({
+  status,
+  rows,
+}: {
+  status: CalendarStatus
+  rows: CalendarRow[]
+}) {
+  if (rows.length === 0) return null
+  const style = STATUS_STYLE[status]
+  return (
+    <div className="flex flex-wrap items-baseline gap-1.5">
+      <span className={`inline-flex items-center gap-1 font-medium ${style.text}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+        {style.label}:
+      </span>
+      <span className="text-zinc-700">
+        {rows.map((r, i) => (
+          <span key={r.id}>
+            {i > 0 ? ', ' : ''}
+            <span className={style.text}>{r.name}</span>
+          </span>
+        ))}
+      </span>
+    </div>
   )
 }
 
 function DayCell({
   cell,
   buckets,
+  isSelected,
+  onSelect,
 }: {
   cell: { day: number; iso: string } | null
   buckets: DayBuckets | null
+  isSelected: boolean
+  onSelect: () => void
 }) {
   if (!cell) {
-    return <div className="h-16 border-l border-t border-zinc-100 bg-zinc-50/30 first:border-l-0" />
+    return <div className="h-[88px] border-l border-t border-zinc-100 bg-zinc-50/40 first:border-l-0" />
   }
+
   const am = buckets?.am ?? []
   const pm = buckets?.pm ?? []
-  const hasAm = am.length > 0
-  const hasPm = pm.length > 0
-
-  const tooltip = cell
-    ? [
-        formatLongDate(cell.iso),
-        hasAm ? `AM: ${am.map((t) => t.name).join(' · ')}` : '',
-        hasPm ? `PM: ${pm.map((t) => t.name).join(' · ')}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : ''
+  const isClickable = am.length > 0 || pm.length > 0
 
   return (
-    <div
-      title={tooltip}
-      className="relative flex h-16 flex-col border-l border-t border-zinc-100 first:border-l-0"
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={!isClickable}
+      className={`group relative flex h-[88px] flex-col border-l border-t border-zinc-100 text-left transition first:border-l-0 ${
+        isSelected ? 'ring-2 ring-zinc-900 ring-inset' : ''
+      } ${isClickable ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'}`}
     >
       <span className="px-1 pt-0.5 text-[10px] font-medium text-zinc-500 sm:text-[11px]">
         {cell.day}
       </span>
-      <div className="mt-auto flex flex-col gap-px">
-        <SlotBar tags={am} />
-        <SlotBar tags={pm} />
+      <SlotZone label="AM" tags={am} />
+      <div className="h-px bg-zinc-100" />
+      <SlotZone label="PM" tags={pm} />
+    </button>
+  )
+}
+
+function SlotZone({ label, tags }: { label: 'AM' | 'PM'; tags: Tag[] }) {
+  const isEmpty = tags.length === 0
+  return (
+    <div
+      className={`relative flex flex-1 items-stretch ${
+        isEmpty ? 'bg-white' : ''
+      }`}
+    >
+      <span
+        className={`pointer-events-none absolute left-0.5 top-0 text-[8px] font-medium uppercase tracking-wider ${
+          isEmpty ? 'text-zinc-300' : 'text-white/80 mix-blend-luminosity'
+        } sm:text-[9px]`}
+      >
+        {label}
+      </span>
+      {!isEmpty && (
+        <div className="flex flex-1 items-stretch pl-4 pr-0.5 py-0.5">
+          {tags.length === 1 ? (
+            <ChipSolo tag={tags[0]} />
+          ) : (
+            tags.map((t, i) => (
+              <ChipSplit key={`${t.rowId}-${i}`} tag={t} count={tags.length} />
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChipSolo({ tag }: { tag: Tag }) {
+  const s = STATUS_STYLE[tag.status]
+  return (
+    <span
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm border ${s.solid} ${s.border} px-1 text-[9px] font-semibold leading-tight text-white sm:text-[10px]`}
+    >
+      {tag.code}
+    </span>
+  )
+}
+
+function ChipSplit({ tag, count }: { tag: Tag; count: number }) {
+  const s = STATUS_STYLE[tag.status]
+  return (
+    <span
+      className={`flex flex-1 items-center justify-center overflow-hidden border-r border-white/60 last:border-r-0 ${s.solid} text-[8px] font-bold leading-none text-white ${count >= 3 ? 'min-w-0' : ''}`}
+    >
+      <span className="truncate px-0.5">{count > 3 ? '•' : tag.code}</span>
+    </span>
+  )
+}
+
+function SelectedDayDetail({
+  iso,
+  buckets,
+  onClose,
+}: {
+  iso: string
+  buckets: DayBuckets
+  onClose: () => void
+}) {
+  return (
+    <div className="rounded-lg border border-zinc-300 bg-white p-3 shadow-sm">
+      <header className="mb-2 flex items-baseline justify-between">
+        <h4 className="text-sm font-semibold text-zinc-900">{formatLongDate(iso)}</h4>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[11px] text-zinc-500 underline hover:text-zinc-800"
+        >
+          close
+        </button>
+      </header>
+      <div className="flex flex-col gap-2">
+        <SlotDetailRow label="Morning (AM)" tags={buckets.am} />
+        <SlotDetailRow label="Afternoon (PM)" tags={buckets.pm} />
       </div>
     </div>
   )
 }
 
-function SlotBar({ tags }: { tags: Tag[] }) {
-  if (tags.length === 0) {
-    return <div className="h-3 sm:h-3.5" />
-  }
-  if (tags.length === 1) {
-    const s = STATUS_STYLE[tags[0].status]
-    return <div className={`h-3 sm:h-3.5 ${s.bar}`} />
-  }
-  // Clash — render each tag as an equal-width strip.
+function SlotDetailRow({ label, tags }: { label: string; tags: Tag[] }) {
   return (
-    <div className="flex h-3 sm:h-3.5">
-      {tags.map((t, i) => {
-        const s = STATUS_STYLE[t.status]
-        return (
-          <div
-            key={`${t.rowId}-${i}`}
-            className={`flex-1 ${s.bar} ${i > 0 ? 'border-l border-white' : ''}`}
-          />
-        )
-      })}
+    <div className="flex flex-col gap-1 text-xs">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+        {label}
+      </span>
+      {tags.length === 0 ? (
+        <span className="text-zinc-400">— free —</span>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {tags.map((t, i) => {
+            const s = STATUS_STYLE[t.status]
+            return (
+              <li
+                key={`${t.rowId}-${i}`}
+                className={`flex items-center gap-2 rounded-md border px-2 py-1 ${s.softBg} ${s.border}`}
+              >
+                <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
+                <span className={`text-xs font-medium ${s.text}`}>{t.name}</span>
+                <span className={`ml-auto text-[10px] font-medium ${s.text}`}>
+                  {s.label}
+                </span>
+              </li>
+            )
+          })}
+          {tags.length > 1 && (
+            <li className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+              ⚠ Clash — {tags.length} courses in this slot
+            </li>
+          )}
+        </ul>
+      )}
     </div>
   )
 }
@@ -316,7 +496,7 @@ function OtherCommitments({ rows }: { rows: CalendarRow[] }) {
   return (
     <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
       <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-600">
-        Other commitments
+        Other commitments (online / long-range)
       </h3>
       <ul className="flex flex-col gap-1.5">
         {rows.map((r) => {
@@ -325,11 +505,14 @@ function OtherCommitments({ rows }: { rows: CalendarRow[] }) {
             <li key={r.id} className="flex items-start gap-2 text-xs">
               <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
               <span className="flex-1">
-                <span className="font-medium text-zinc-900">{r.name}</span>
+                <span className={`font-medium ${s.text}`}>{r.name}</span>
                 <span className="text-zinc-500">
                   {' · '}
                   {r.schedule_text ?? `${r.start_date} → ${r.end_date}`}
                 </span>
+              </span>
+              <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${s.badge}`}>
+                {s.label}
               </span>
             </li>
           )
@@ -339,7 +522,11 @@ function OtherCommitments({ rows }: { rows: CalendarRow[] }) {
   )
 }
 
-function Legend({ counts }: { counts: { kept: number; dropping: number; adding: number } }) {
+function Legend({
+  counts,
+}: {
+  counts: { kept: number; dropping: number; adding: number }
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
       <LegendChip status="kept" count={counts.kept} />
@@ -364,8 +551,8 @@ function LegendChip({ status, count }: { status: CalendarStatus; count: number }
 function formatLongDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`)
   return d.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
   })

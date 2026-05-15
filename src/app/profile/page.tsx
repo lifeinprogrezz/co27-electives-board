@@ -54,12 +54,20 @@ export default async function ProfilePage() {
           </p>
         </div>
         {isOnboarded && (
-          <Link
-            href="/board"
-            className="text-xs text-zinc-500 underline hover:text-zinc-700"
-          >
-            Board →
-          </Link>
+          <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
+            <Link
+              href="/board"
+              className="text-zinc-500 underline hover:text-zinc-700"
+            >
+              Board →
+            </Link>
+            <Link
+              href="/calendar"
+              className="text-zinc-500 underline hover:text-zinc-700"
+            >
+              Calendar →
+            </Link>
+          </div>
         )}
       </header>
 

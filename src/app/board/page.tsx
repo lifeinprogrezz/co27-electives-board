@@ -46,12 +46,20 @@ export default async function BoardPage() {
             Drops in red, adds in green. Tap a name to show contact.
           </p>
         </div>
-        <Link
-          href="/profile"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-        >
-          My listings
-        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <Link
+            href="/calendar"
+            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Calendar →
+          </Link>
+          <Link
+            href="/profile"
+            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            My listings
+          </Link>
+        </div>
       </header>
 
       <BoardClient

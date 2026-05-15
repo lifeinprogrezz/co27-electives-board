@@ -85,6 +85,7 @@ interface Tag {
 }
 
 interface DayBuckets {
+  continuous: Tag[]
   am: Tag[]
   pm: Tag[]
 }
@@ -125,20 +126,41 @@ export function CalendarClient({ rows }: Props) {
 
   const byDate = useMemo(() => {
     const m = new Map<string, DayBuckets>()
+    const ensure = (d: string) => {
+      if (!m.has(d)) m.set(d, { continuous: [], am: [], pm: [] })
+      return m.get(d)!
+    }
     for (const r of gridRows) {
       const slot = r.slot ?? 'special'
       const code = codeByCourse.get(r.id) ?? ''
       for (const d of r.session_dates) {
-        if (!m.has(d)) m.set(d, { am: [], pm: [] })
-        const b = m.get(d)!
+        const b = ensure(d)
         const tag: Tag = { rowId: r.id, name: r.name, code, status: r.status }
         if (slot === 'AM' || slot === 'AM+PM' || slot === 'special') b.am.push(tag)
         if (slot === 'PM' || slot === 'AM+PM' || slot === 'fri-pm' || slot === 'special')
           b.pm.push(tag)
       }
     }
+    // Continuous courses: stamp the track on every weekday in their range.
+    for (const r of otherRows) {
+      if (!r.start_date || !r.end_date) continue
+      const code = codeByCourse.get(r.id) ?? ''
+      const tag: Tag = { rowId: r.id, name: r.name, code, status: r.status }
+      const start = new Date(`${r.start_date}T00:00:00Z`)
+      const end = new Date(`${r.end_date}T00:00:00Z`)
+      for (
+        const cursor = new Date(start);
+        cursor <= end;
+        cursor.setUTCDate(cursor.getUTCDate() + 1)
+      ) {
+        const wd = cursor.getUTCDay() || 7
+        if (wd < 1 || wd > 5) continue // skip weekends
+        const iso = cursor.toISOString().slice(0, 10)
+        ensure(iso).continuous.push(tag)
+      }
+    }
     return m
-  }, [gridRows, codeByCourse])
+  }, [gridRows, otherRows, codeByCourse])
 
   /** Which day-grid rows have at least one session in YYYY-MM month. */
   const rowsByMonth = useMemo(() => {
@@ -308,9 +330,6 @@ function MonthBlock({
         )}
       </header>
 
-      {continuousRows.length > 0 && (
-        <ContinuousTracks rows={continuousRows} month={month} />
-      )}
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
         <div className="grid grid-cols-5 border-b border-zinc-200 bg-zinc-50">
@@ -382,61 +401,6 @@ function MonthGroupLine({
   )
 }
 
-function ContinuousTracks({
-  rows,
-  month,
-}: {
-  rows: CalendarRow[]
-  month: MonthDef
-}) {
-  // Render each continuous course as a horizontal bar spanning the days it
-  // occupies in THIS month (clipped to month boundaries).
-  const monthStart = new Date(Date.UTC(month.year, month.monthIdx, 1))
-  const monthEnd = new Date(Date.UTC(month.year, month.monthIdx + 1, 0))
-  const daysInMonth = monthEnd.getUTCDate()
-
-  return (
-    <div className="flex flex-col gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-2">
-      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-        Continuous tracks (online / long-range)
-      </span>
-      <ul className="flex flex-col gap-1.5">
-        {rows.map((r) => {
-          const courseStart = new Date(`${r.start_date}T00:00:00Z`)
-          const courseEnd = new Date(`${r.end_date}T00:00:00Z`)
-          const clippedStart = courseStart < monthStart ? monthStart : courseStart
-          const clippedEnd = courseEnd > monthEnd ? monthEnd : courseEnd
-          const startDay = clippedStart.getUTCDate()
-          const endDay = clippedEnd.getUTCDate()
-          const leftPct = ((startDay - 1) / daysInMonth) * 100
-          const widthPct = ((endDay - startDay + 1) / daysInMonth) * 100
-          const s = STATUS_STYLE[r.status]
-          return (
-            <li
-              key={r.id}
-              className="flex flex-col gap-1"
-              title={`${r.name} · ${r.schedule_text ?? `${r.start_date} → ${r.end_date}`} · ${s.label}`}
-            >
-              <div className="relative h-5 rounded bg-white">
-                <div
-                  className={`absolute top-0 h-full rounded ${s.solid} flex items-center px-1.5`}
-                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                >
-                  <span className="truncate text-[10px] font-semibold text-white">
-                    {r.name}
-                  </span>
-                </div>
-              </div>
-              <span className="text-[10px] text-zinc-500">
-                {r.schedule_text ?? `${r.start_date} → ${r.end_date}`}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}
 
 function DayCell({
   cell,
@@ -450,29 +414,51 @@ function DayCell({
   onSelect: () => void
 }) {
   if (!cell) {
-    return <div className="h-[88px] border-l border-t border-zinc-100 bg-zinc-50/40 first:border-l-0" />
+    return <div className="h-[96px] border-l border-t border-zinc-100 bg-zinc-50/40 first:border-l-0" />
   }
 
+  const continuous = buckets?.continuous ?? []
   const am = buckets?.am ?? []
   const pm = buckets?.pm ?? []
-  const isClickable = am.length > 0 || pm.length > 0
+  const isClickable = continuous.length > 0 || am.length > 0 || pm.length > 0
 
   return (
     <button
       type="button"
       onClick={onSelect}
       disabled={!isClickable}
-      className={`group relative flex h-[88px] flex-col border-l border-t border-zinc-100 text-left transition first:border-l-0 ${
+      className={`group relative flex h-[96px] flex-col border-l border-t border-zinc-100 text-left transition first:border-l-0 ${
         isSelected ? 'ring-2 ring-zinc-900 ring-inset' : ''
       } ${isClickable ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'}`}
     >
       <span className="px-1 pt-0.5 text-[10px] font-medium text-zinc-500 sm:text-[11px]">
         {cell.day}
       </span>
+      <ContinuousZone tags={continuous} />
       <SlotZone label="AM" tags={am} />
       <div className="h-px bg-zinc-100" />
       <SlotZone label="PM" tags={pm} />
     </button>
+  )
+}
+
+function ContinuousZone({ tags }: { tags: Tag[] }) {
+  if (tags.length === 0) {
+    return <div className="h-2 sm:h-2.5" />
+  }
+  return (
+    <div className="flex h-2 sm:h-2.5">
+      {tags.map((t, i) => {
+        const s = STATUS_STYLE[t.status]
+        return (
+          <div
+            key={`${t.rowId}-${i}`}
+            className={`flex-1 ${s.solid} ${i > 0 ? 'border-l border-white/60' : ''}`}
+            title={t.name}
+          />
+        )
+      })}
+    </div>
   )
 }
 
@@ -550,6 +536,9 @@ function SelectedDayDetail({
         </button>
       </header>
       <div className="flex flex-col gap-2">
+        {buckets.continuous.length > 0 && (
+          <SlotDetailRow label="All day (continuous)" tags={buckets.continuous} />
+        )}
         <SlotDetailRow label="Morning (AM)" tags={buckets.am} />
         <SlotDetailRow label="Afternoon (PM)" tags={buckets.pm} />
       </div>

@@ -22,6 +22,9 @@ insert into public.courses (class_code, name, ects, professor, term, schedule_te
 ('4213',  'Modern Spain and Catalunya',                     1.5, 'Alex Fernández de Castro','summer', 'Fri PM: Jun 19 + Jul 3, 10, 17',                  'fri-pm', 'Online with synchronous group work'),
 ('11145', 'Introduction to Python',                         1.5, 'Esteve Almirall',        'summer', 'Online async, Jun 25 - Jul 25',                   'online', null),
 (null,    'The Startup Experience / Start-Up Program',      3,   'Jan Brinckmann + Davide Rovera', 'summer', 'Mid-Jun to mid-Oct',                       'special','10-20h/wk, special structure'),
+-- EMBA electives — students may enroll in only ONE EMBA Summer elective
+(null,    'Monetization (EMBA)',                            1.5, 'Marco Bertini',          'summer', 'Jul 9 AM+PM, Jul 10 AM',                          'AM+PM',  'EMBA elective — students may enroll in only one EMBA Summer elective. Capitalizing on Customer Satisfaction to Drive Organic Growth.'),
+(null,    'Digital Strategy & Transformation (EMBA)',       1.5, 'Wim Vanhaverbeke',       'summer', 'Jul 9 AM+PM, Jul 10 AM',                          'AM+PM',  'EMBA elective — students may enroll in only one EMBA Summer elective.'),
 
 -- September (Term 4 Intensive)
 ('5456',  'Impact Investing in Action',                     3,   'Casasnovas + Hehenberger','september', 'Sep 14-18 AM+PM',                              'AM+PM',  null),

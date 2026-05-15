@@ -39,8 +39,9 @@ export default async function LandingPage() {
       <p className="text-xs leading-relaxed text-zinc-500">
         This is a peer-built tool to help Co27 students coordinate elective trades during
         Add/Drop. We store your ESADE email, name, WhatsApp number (if you choose to share
-        it), cohort section, and elective preferences. We never share data with third
-        parties. You can delete your account anytime from your profile page.
+        it), your assigned electives, and the courses you want to drop or add. We never
+        share data with third parties. You can delete your account anytime from your
+        profile page.
       </p>
     </div>
   )

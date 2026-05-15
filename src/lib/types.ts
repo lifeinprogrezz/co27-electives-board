@@ -20,7 +20,7 @@ export interface UserProfile {
   email: string
   name: string | null
   whatsapp_number: string | null
-  cohort_section: 1 | 2 | 3 | null
+  assigned_course_ids: string[]
 }
 
 export interface Listing {

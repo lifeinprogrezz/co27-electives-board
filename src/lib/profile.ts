@@ -11,15 +11,7 @@ const ProfileSchema = z.object({
     .trim()
     .min(1, 'Name is required.')
     .max(80, 'Keep your name under 80 characters.'),
-  whatsapp: z
-    .string()
-    .trim()
-    .max(20)
-    .optional()
-    .or(z.literal('')),
-  cohort_section: z
-    .string()
-    .refine((v) => v === '1' || v === '2' || v === '3', 'Pick a cohort section.'),
+  whatsapp: z.string().trim().max(20).optional().or(z.literal('')),
 })
 
 export type SaveProfileState =
@@ -35,6 +27,17 @@ function normalizeWhatsapp(input: string): string | null {
   return digits
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function uniqueUuids(values: FormDataEntryValue[]): string[] {
+  const out = new Set<string>()
+  for (const v of values) {
+    const s = v.toString().trim()
+    if (UUID_RE.test(s)) out.add(s)
+  }
+  return [...out]
+}
+
 export async function saveProfile(
   _prev: SaveProfileState,
   formData: FormData,
@@ -42,7 +45,6 @@ export async function saveProfile(
   const parsed = ProfileSchema.safeParse({
     name: formData.get('name') ?? '',
     whatsapp: formData.get('whatsapp') ?? '',
-    cohort_section: formData.get('cohort_section') ?? '',
   })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input.' }
@@ -67,22 +69,36 @@ export async function saveProfile(
     }
   }
 
-  const dropIds = formData.getAll('drop_ids').map((v) => v.toString())
-  const addIds = formData.getAll('add_ids').map((v) => v.toString())
+  const assignedIds = uniqueUuids(formData.getAll('assigned_ids'))
+  const dropIds = uniqueUuids(formData.getAll('drop_ids'))
+  const addIds = uniqueUuids(formData.getAll('add_ids'))
 
-  // Reject overlap (a course can't be both drop and add).
-  const overlap = dropIds.filter((id) => addIds.includes(id))
-  if (overlap.length > 0) {
-    return { ok: false, error: 'A course can\'t be both "drop" and "add".' }
+  // Drops must be a subset of assigned.
+  const assignedSet = new Set(assignedIds)
+  const invalidDrops = dropIds.filter((id) => !assignedSet.has(id))
+  if (invalidDrops.length > 0) {
+    return {
+      ok: false,
+      error: 'You can only drop courses you marked as assigned.',
+    }
   }
 
-  // 1. Upsert user profile.
+  // Adds must NOT be in assigned (can't add what you already have).
+  const invalidAdds = addIds.filter((id) => assignedSet.has(id))
+  if (invalidAdds.length > 0) {
+    return {
+      ok: false,
+      error: "You can't add a course you're already assigned to.",
+    }
+  }
+
+  // 1. Update user profile.
   const { error: profileError } = await supabase
     .from('users')
     .update({
       name: parsed.data.name,
       whatsapp_number: whatsapp,
-      cohort_section: Number(parsed.data.cohort_section),
+      assigned_course_ids: assignedIds,
     })
     .eq('id', user.id)
 

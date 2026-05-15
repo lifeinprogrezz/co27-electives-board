@@ -26,10 +26,10 @@ export async function GET(request: Request) {
   if (user) {
     const { data: profile } = await supabase
       .from('users')
-      .select('cohort_section')
+      .select('name')
       .eq('id', user.id)
       .maybeSingle()
-    const target = profile?.cohort_section ? next : '/profile'
+    const target = profile?.name ? next : '/profile'
     return NextResponse.redirect(`${origin}${target}`)
   }
 

@@ -28,7 +28,7 @@ export default async function BoardPage() {
       .from('listings')
       .select(
         `id, type, course_id,
-         user:users!inner(id, name, email, whatsapp_number, cohort_section)`,
+         user:users!inner(id, name, email, whatsapp_number)`,
       )
       .eq('status', 'active'),
   ])

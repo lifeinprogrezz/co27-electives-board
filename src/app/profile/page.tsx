@@ -35,22 +35,25 @@ export default async function ProfilePage() {
     .filter((l) => l.type === 'have_want_drop')
     .map((l) => l.course_id)
   const addIds = listings.filter((l) => l.type === 'want_add').map((l) => l.course_id)
+  const assignedIds = profile?.assigned_course_ids ?? []
 
   const initialName =
     profile?.name?.trim() || nameFromEmail(profile?.email ?? authUser.email ?? '')
+
+  const isOnboarded = Boolean(profile?.name?.trim())
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            {profile?.cohort_section ? 'Edit your profile' : 'Welcome — set up your profile'}
+            {isOnboarded ? 'Edit your profile' : 'Welcome — set up your profile'}
           </h1>
           <p className="text-sm text-zinc-600">
             Signed in as <span className="font-mono">{profile?.email ?? authUser.email}</span>
           </p>
         </div>
-        {profile?.cohort_section && (
+        {isOnboarded && (
           <Link
             href="/board"
             className="text-xs text-zinc-500 underline hover:text-zinc-700"
@@ -63,7 +66,7 @@ export default async function ProfilePage() {
       <ProfileForm
         initialName={initialName}
         initialWhatsapp={profile?.whatsapp_number ?? ''}
-        initialCohortSection={profile?.cohort_section ?? null}
+        initialAssignedIds={assignedIds}
         initialDropIds={dropIds}
         initialAddIds={addIds}
         courses={courses}

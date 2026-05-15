@@ -12,8 +12,8 @@ export default function PrivacyPage() {
         <h2 className="text-base font-medium text-zinc-900">What we store</h2>
         <p>
           Your ESADE email, your display name, your WhatsApp number (only if you choose to
-          share it), your cohort section, and the courses you list as want-to-drop or
-          want-to-add.
+          share it), the electives you were assigned, and the courses you list as
+          want-to-drop or want-to-add.
         </p>
 
         <h2 className="mt-3 text-base font-medium text-zinc-900">Why</h2>

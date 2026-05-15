@@ -20,6 +20,8 @@ if (!url) {
 }
 
 const includeSeed = process.argv.includes('--seed')
+const onlyIdx = process.argv.indexOf('--only')
+const onlyFile = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null
 
 // Strip sslmode from the connection string so we can pass ssl options
 // explicitly — Supabase ships a self-signed cert chain.
@@ -36,9 +38,11 @@ await client.connect()
 
 try {
   const migrationsDir = 'supabase/migrations'
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
+  const files = onlyFile
+    ? [onlyFile]
+    : readdirSync(migrationsDir)
+        .filter((f) => f.endsWith('.sql'))
+        .sort()
 
   for (const f of files) {
     const sql = readFileSync(join(migrationsDir, f), 'utf8')

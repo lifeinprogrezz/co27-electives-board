@@ -25,14 +25,14 @@ export const getCurrentProfile = cache(async (): Promise<UserProfile | null> => 
 
   const { data } = await supabase
     .from('users')
-    .select('id, email, name, whatsapp_number, cohort_section')
+    .select('id, email, name, whatsapp_number, assigned_course_ids')
     .eq('id', user.id)
     .maybeSingle()
 
   return (data as UserProfile | null) ?? null
 })
 
-/** True when the user has completed onboarding (filled cohort_section). */
+/** True when the user has completed onboarding (saved their name). */
 export function isProfileComplete(profile: UserProfile | null): boolean {
-  return Boolean(profile?.cohort_section)
+  return Boolean(profile?.name?.trim())
 }

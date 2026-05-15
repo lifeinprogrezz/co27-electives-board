@@ -23,7 +23,6 @@ export interface BoardListing {
     name: string | null
     email: string
     whatsapp_number: string | null
-    cohort_section: 1 | 2 | 3 | null
   }
 }
 
@@ -231,10 +230,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
     <li className="flex items-center justify-between gap-2 rounded-md bg-zinc-50 px-2 py-1.5 text-sm">
       <span className="flex flex-col leading-tight">
         <span className="font-medium text-zinc-900">{name}</span>
-        <span className="text-[11px] text-zinc-500">
-          Section {u.cohort_section ?? '?'}
-          {isMe ? ' · you' : ''}
-        </span>
+        {isMe && <span className="text-[11px] text-zinc-500">you</span>}
       </span>
       {isMe ? (
         <span className="text-[11px] text-zinc-400">your post</span>

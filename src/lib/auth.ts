@@ -91,10 +91,10 @@ export async function verifyEmailOtp(
   if (user) {
     const { data: profile } = await supabase
       .from('users')
-      .select('cohort_section')
+      .select('name')
       .eq('id', user.id)
       .maybeSingle()
-    redirect(profile?.cohort_section ? '/board' : '/profile')
+    redirect(profile?.name ? '/board' : '/profile')
   }
   redirect('/profile')
 }

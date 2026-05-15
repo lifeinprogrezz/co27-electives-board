@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 
 export type CalendarStatus = 'kept' | 'dropping' | 'adding'
+export type CourseSlot = 'AM' | 'PM' | 'AM+PM' | 'online' | 'fri-pm' | 'special'
 
 export interface CalendarRow {
   id: string
@@ -10,51 +11,66 @@ export interface CalendarRow {
   ects: number
   professor: string | null
   schedule_text: string | null
-  start_date: string // YYYY-MM-DD
-  end_date: string // YYYY-MM-DD
+  slot: CourseSlot | null
+  start_date: string
+  end_date: string
+  session_dates: string[] // YYYY-MM-DD list
   status: CalendarStatus
 }
 
-// Calendar spans Jun 1 → Dec 31, 2026 (7 months, 214 days).
-const TIMELINE_START = new Date(Date.UTC(2026, 5, 1)).getTime()
-const TIMELINE_END = new Date(Date.UTC(2026, 11, 31)).getTime()
-const TIMELINE_SPAN_MS = TIMELINE_END - TIMELINE_START
+interface MonthDef {
+  name: string
+  year: number
+  monthIdx: number // 0-based
+}
 
-const MONTHS: { label: string; short: string; idx: number }[] = [
-  { label: 'June', short: 'Jun', idx: 5 },
-  { label: 'July', short: 'Jul', idx: 6 },
-  { label: 'August', short: 'Aug', idx: 7 },
-  { label: 'September', short: 'Sep', idx: 8 },
-  { label: 'October', short: 'Oct', idx: 9 },
-  { label: 'November', short: 'Nov', idx: 10 },
-  { label: 'December', short: 'Dec', idx: 11 },
+const MONTHS: MonthDef[] = [
+  { name: 'June', year: 2026, monthIdx: 5 },
+  { name: 'July', year: 2026, monthIdx: 6 },
+  { name: 'August', year: 2026, monthIdx: 7 },
+  { name: 'September', year: 2026, monthIdx: 8 },
+  { name: 'October', year: 2026, monthIdx: 9 },
+  { name: 'November', year: 2026, monthIdx: 10 },
+  { name: 'December', year: 2026, monthIdx: 11 },
 ]
 
-function pctFromTimeline(dateStr: string): number {
-  const t = new Date(`${dateStr}T00:00:00Z`).getTime()
-  const clamped = Math.max(TIMELINE_START, Math.min(TIMELINE_END, t))
-  return ((clamped - TIMELINE_START) / TIMELINE_SPAN_MS) * 100
-}
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
 const STATUS_STYLE: Record<
   CalendarStatus,
-  { bar: string; badge: string; label: string }
+  { bar: string; badge: string; dot: string; label: string }
 > = {
   kept: {
-    bar: 'bg-zinc-400 border-zinc-500 text-white',
+    bar: 'bg-zinc-500',
+    dot: 'bg-zinc-500',
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     label: 'Keeping',
   },
   dropping: {
-    bar: 'bg-red-500 border-red-600 text-white',
+    bar: 'bg-red-500',
+    dot: 'bg-red-500',
     badge: 'bg-red-50 text-red-700 border-red-200',
     label: 'Dropping',
   },
   adding: {
-    bar: 'bg-emerald-500 border-emerald-600 text-white',
+    bar: 'bg-emerald-500',
+    dot: 'bg-emerald-500',
     badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     label: 'Adding',
   },
+}
+
+/** Tag = one course's claim on a given (date, slot-half). */
+interface Tag {
+  rowId: string
+  name: string
+  status: CalendarStatus
+  isFullDay: boolean
+}
+
+interface DayBuckets {
+  am: Tag[]
+  pm: Tag[]
 }
 
 interface Props {
@@ -62,16 +78,52 @@ interface Props {
 }
 
 export function CalendarClient({ rows }: Props) {
-  const sorted = useMemo(
-    () =>
-      [...rows].sort((a, b) => {
-        if (a.start_date !== b.start_date) return a.start_date < b.start_date ? -1 : 1
-        return a.name.localeCompare(b.name)
-      }),
-    [rows],
+  /** Day-grid courses: have session_dates AND a non-flexible slot. */
+  const gridRows = rows.filter(
+    (r) => r.session_dates.length > 0 && r.slot && r.slot !== 'online',
+  )
+  /** Long-range / online / undated courses go to a separate strip. */
+  const otherRows = rows.filter(
+    (r) =>
+      r.session_dates.length === 0 ||
+      r.slot === 'online' ||
+      !r.slot,
   )
 
-  if (sorted.length === 0) {
+  /** Index sessions by date → AM/PM. */
+  const byDate = useMemo(() => {
+    const m = new Map<string, DayBuckets>()
+    for (const r of gridRows) {
+      const slot = r.slot ?? 'special'
+      for (const d of r.session_dates) {
+        if (!m.has(d)) m.set(d, { am: [], pm: [] })
+        const b = m.get(d)!
+        const tag: Tag = {
+          rowId: r.id,
+          name: r.name,
+          status: r.status,
+          isFullDay: slot === 'AM+PM' || slot === 'special',
+        }
+        if (slot === 'AM' || slot === 'AM+PM' || slot === 'special') b.am.push(tag)
+        if (slot === 'PM' || slot === 'AM+PM' || slot === 'fri-pm' || slot === 'special')
+          b.pm.push(tag)
+      }
+    }
+    return m
+  }, [gridRows])
+
+  /** Per-month: does it have any sessions? */
+  const monthHasSessions = useMemo(() => {
+    const set = new Set<string>()
+    for (const r of gridRows)
+      for (const d of r.session_dates) {
+        const key = d.slice(0, 7) // YYYY-MM
+        set.add(key)
+      }
+    return set
+  }, [gridRows])
+
+  if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-700">
         <p className="font-medium text-zinc-900">Nothing on your calendar yet.</p>
@@ -87,101 +139,203 @@ export function CalendarClient({ rows }: Props) {
   }
 
   const counts = {
-    kept: sorted.filter((r) => r.status === 'kept').length,
-    dropping: sorted.filter((r) => r.status === 'dropping').length,
-    adding: sorted.filter((r) => r.status === 'adding').length,
+    kept: rows.filter((r) => r.status === 'kept').length,
+    dropping: rows.filter((r) => r.status === 'dropping').length,
+    adding: rows.filter((r) => r.status === 'adding').length,
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <Legend counts={counts} />
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        {/* Month header */}
-        <div className="grid grid-cols-[110px_1fr] border-b border-zinc-200 bg-zinc-50 sm:grid-cols-[180px_1fr]">
-          <div className="px-2 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500 sm:px-3 sm:text-xs">
-            Course
-          </div>
-          <div className="relative grid grid-cols-7">
-            {MONTHS.map((m) => (
-              <div
-                key={m.idx}
-                className="border-l border-zinc-200 px-1 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-zinc-500 sm:px-2 sm:text-xs"
-              >
-                <span className="sm:hidden">{m.short[0]}</span>
-                <span className="hidden sm:inline">{m.short}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {otherRows.length > 0 && <OtherCommitments rows={otherRows} />}
 
-        {/* Rows */}
-        <ul className="divide-y divide-zinc-100">
-          {sorted.map((row) => (
-            <li
-              key={row.id}
-              className="grid grid-cols-[110px_1fr] sm:grid-cols-[180px_1fr]"
-            >
-              <div className="flex min-w-0 flex-col gap-0.5 px-2 py-2 sm:px-3">
-                <span className="truncate text-xs font-medium text-zinc-900 sm:text-sm">
-                  {row.name}
-                </span>
-                <span className="truncate text-[10px] text-zinc-500 sm:text-[11px]">
-                  {row.ects} ECTS
-                  {row.professor ? ` · ${row.professor.split(/[+,]/)[0].trim()}` : ''}
-                </span>
-              </div>
-              <div className="relative grid grid-cols-7 py-2">
-                {/* Month gridlines (background) */}
-                {MONTHS.map((m, i) => (
-                  <div
-                    key={m.idx}
-                    className={`h-full ${i === 0 ? '' : 'border-l border-zinc-100'}`}
-                  />
-                ))}
-                {/* Bar */}
-                <CourseBar row={row} />
-              </div>
-            </li>
-          ))}
-        </ul>
+      <div className="flex flex-col gap-6">
+        {MONTHS.map((m) => {
+          const monthKey = `${m.year}-${String(m.monthIdx + 1).padStart(2, '0')}`
+          const hasSessions = monthHasSessions.has(monthKey)
+          return (
+            <MonthBlock
+              key={monthKey}
+              month={m}
+              byDate={byDate}
+              hasSessions={hasSessions}
+            />
+          )
+        })}
       </div>
 
       <p className="text-[11px] leading-relaxed text-zinc-500">
-        Bars span each course&apos;s date range. Tap a bar for details. Overlapping
-        bars on the same week = schedule conflict.
+        Top half of each day cell = morning (AM), bottom half = afternoon (PM). When
+        two courses claim the same slot on the same day, they appear side by side —
+        that&apos;s a clash. Tap a day for course names.
       </p>
     </div>
   )
 }
 
-function CourseBar({ row }: { row: CalendarRow }) {
-  const left = pctFromTimeline(row.start_date)
-  const right = 100 - pctFromTimeline(row.end_date)
-  const style = STATUS_STYLE[row.status]
+function MonthBlock({
+  month,
+  byDate,
+  hasSessions,
+}: {
+  month: MonthDef
+  byDate: Map<string, DayBuckets>
+  hasSessions: boolean
+}) {
+  // Build the weekday cells for this month. Mon-Fri only (no weekend electives).
+  // Each row is a calendar week. We always start from the first Monday on/before day 1.
+  const firstDay = new Date(Date.UTC(month.year, month.monthIdx, 1))
+  const lastDay = new Date(Date.UTC(month.year, month.monthIdx + 1, 0))
+  const daysInMonth = lastDay.getUTCDate()
 
-  const title = [
-    row.name,
-    row.schedule_text ?? '',
-    row.professor ?? '',
-    `${row.ects} ECTS`,
-    style.label,
-  ]
-    .filter(Boolean)
-    .join('\n')
+  // 1 = Monday … 5 = Friday … 7 = Sunday. We want offset to align day 1 under its column.
+  const firstWeekday = firstDay.getUTCDay() || 7 // 0 (Sun) → 7
+  const startOffset = firstWeekday <= 5 ? firstWeekday - 1 : 0 // weekend → push to next Mon
+
+  const cells: ({ day: number; iso: string } | null)[] = []
+  if (firstWeekday <= 5) {
+    for (let i = 0; i < startOffset; i++) cells.push(null)
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(Date.UTC(month.year, month.monthIdx, d))
+    const wd = dt.getUTCDay() || 7
+    if (wd >= 1 && wd <= 5) {
+      const iso = dt.toISOString().slice(0, 10)
+      cells.push({ day: d, iso })
+    }
+  }
+  // Pad to multiple of 5.
+  while (cells.length % 5 !== 0) cells.push(null)
+
+  return (
+    <section className="flex flex-col gap-2">
+      <header className="flex items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
+          {month.name} {month.year}
+        </h2>
+        {!hasSessions && (
+          <span className="text-[11px] text-zinc-400">no sessions</span>
+        )}
+      </header>
+
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        {/* Weekday header */}
+        <div className="grid grid-cols-5 border-b border-zinc-200 bg-zinc-50">
+          {WEEKDAY_LABELS.map((w) => (
+            <div
+              key={w}
+              className="px-1 py-1.5 text-center text-[10px] font-medium uppercase tracking-wider text-zinc-500 sm:text-xs"
+            >
+              {w}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-5">
+          {cells.map((cell, idx) => (
+            <DayCell
+              key={idx}
+              cell={cell}
+              buckets={cell ? byDate.get(cell.iso) ?? null : null}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function DayCell({
+  cell,
+  buckets,
+}: {
+  cell: { day: number; iso: string } | null
+  buckets: DayBuckets | null
+}) {
+  if (!cell) {
+    return <div className="h-16 border-l border-t border-zinc-100 bg-zinc-50/30 first:border-l-0" />
+  }
+  const am = buckets?.am ?? []
+  const pm = buckets?.pm ?? []
+  const hasAm = am.length > 0
+  const hasPm = pm.length > 0
+
+  const tooltip = cell
+    ? [
+        formatLongDate(cell.iso),
+        hasAm ? `AM: ${am.map((t) => t.name).join(' · ')}` : '',
+        hasPm ? `PM: ${pm.map((t) => t.name).join(' · ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : ''
 
   return (
     <div
-      title={title}
-      aria-label={title}
-      className={`pointer-events-auto absolute top-1/2 flex h-5 -translate-y-1/2 items-center overflow-hidden rounded-md border px-1.5 text-[10px] font-medium sm:h-6 sm:text-[11px] ${style.bar}`}
-      style={{
-        left: `max(${left}%, 0px)`,
-        right: `max(${right}%, 0px)`,
-      }}
+      title={tooltip}
+      className="relative flex h-16 flex-col border-l border-t border-zinc-100 first:border-l-0"
     >
-      <span className="truncate">{style.label}</span>
+      <span className="px-1 pt-0.5 text-[10px] font-medium text-zinc-500 sm:text-[11px]">
+        {cell.day}
+      </span>
+      <div className="mt-auto flex flex-col gap-px">
+        <SlotBar tags={am} />
+        <SlotBar tags={pm} />
+      </div>
     </div>
+  )
+}
+
+function SlotBar({ tags }: { tags: Tag[] }) {
+  if (tags.length === 0) {
+    return <div className="h-3 sm:h-3.5" />
+  }
+  if (tags.length === 1) {
+    const s = STATUS_STYLE[tags[0].status]
+    return <div className={`h-3 sm:h-3.5 ${s.bar}`} />
+  }
+  // Clash — render each tag as an equal-width strip.
+  return (
+    <div className="flex h-3 sm:h-3.5">
+      {tags.map((t, i) => {
+        const s = STATUS_STYLE[t.status]
+        return (
+          <div
+            key={`${t.rowId}-${i}`}
+            className={`flex-1 ${s.bar} ${i > 0 ? 'border-l border-white' : ''}`}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function OtherCommitments({ rows }: { rows: CalendarRow[] }) {
+  return (
+    <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+      <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-600">
+        Other commitments
+      </h3>
+      <ul className="flex flex-col gap-1.5">
+        {rows.map((r) => {
+          const s = STATUS_STYLE[r.status]
+          return (
+            <li key={r.id} className="flex items-start gap-2 text-xs">
+              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
+              <span className="flex-1">
+                <span className="font-medium text-zinc-900">{r.name}</span>
+                <span className="text-zinc-500">
+                  {' · '}
+                  {r.schedule_text ?? `${r.start_date} → ${r.end_date}`}
+                </span>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
 
@@ -201,8 +355,18 @@ function LegendChip({ status, count }: { status: CalendarStatus; count: number }
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium ${style.badge}`}
     >
-      <span className={`h-2 w-2 rounded-full ${style.bar.split(' ')[0]}`} />
+      <span className={`h-2 w-2 rounded-full ${style.dot}`} />
       {style.label} ({count})
     </span>
   )
+}
+
+function formatLongDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`)
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
 }

@@ -7,6 +7,7 @@ import {
   CalendarClient,
   type CalendarRow,
   type CalendarStatus,
+  type CourseSlot,
 } from '@/components/calendar-client'
 
 export const dynamic = 'force-dynamic'
@@ -17,8 +18,10 @@ interface DbCourse {
   ects: number
   professor: string | null
   schedule_text: string | null
+  slot: CourseSlot | null
   start_date: string | null
   end_date: string | null
+  session_dates: string[] | null
 }
 
 interface DbListing {
@@ -37,7 +40,9 @@ export default async function CalendarPage() {
   const [coursesResult, listingsResult] = await Promise.all([
     supabase
       .from('courses')
-      .select('id, name, ects, professor, schedule_text, start_date, end_date'),
+      .select(
+        'id, name, ects, professor, schedule_text, slot, start_date, end_date, session_dates',
+      ),
     supabase
       .from('listings')
       .select('course_id, type')
@@ -72,8 +77,10 @@ export default async function CalendarPage() {
         ects: Number(c.ects),
         professor: c.professor,
         schedule_text: c.schedule_text,
+        slot: c.slot,
         start_date: c.start_date!,
         end_date: c.end_date!,
+        session_dates: c.session_dates ?? [],
         status,
       }
     })

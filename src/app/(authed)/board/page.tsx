@@ -35,6 +35,13 @@ export default async function BoardPage() {
   // Supabase typing of the embedded relation is loose — coerce to our shape.
   const listings = ((listingsResult.data ?? []) as unknown) as BoardListing[]
 
+  // Build "my courses" set for the quick filter:
+  // assigned ∪ my own drop listings ∪ my own add listings.
+  const myCourseIds = new Set<string>(profile.assigned_course_ids ?? [])
+  for (const l of listings) {
+    if (l.user.id === profile.id) myCourseIds.add(l.course_id)
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -48,6 +55,7 @@ export default async function BoardPage() {
         currentUserId={profile.id}
         courses={courses}
         listings={listings}
+        myCourseIds={[...myCourseIds]}
       />
     </div>
   )

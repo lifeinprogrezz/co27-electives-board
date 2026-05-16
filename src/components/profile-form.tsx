@@ -1,8 +1,19 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 import { saveProfile, type SaveProfileState } from '@/lib/profile'
 import { TERM_LABELS, type Course, type Term } from '@/lib/types'
+
+const DRAFT_KEY = 'co27-profile-draft-v1'
+
+interface Draft {
+  name: string
+  whatsapp: string
+  assigned: string[]
+  drops: string[]
+  adds: string[]
+  step: number
+}
 
 type Step = 1 | 2 | 3 | 4
 const STEPS: { id: Step; label: string; short: string }[] = [
@@ -49,6 +60,57 @@ export function ProfileForm({
   )
   const [drops, setDrops] = useState<Set<string>>(() => new Set(initialDropIds))
   const [adds, setAdds] = useState<Set<string>>(() => new Set(initialAddIds))
+
+  // Restore a saved draft (only for new users — returning users always see
+  // server-side truth so they can edit their saved profile).
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    if (isReturning) return
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      const draft = JSON.parse(raw) as Draft
+      /* eslint-disable react-hooks/set-state-in-effect -- localStorage hydration must happen after mount. */
+      if (typeof draft.name === 'string' && draft.name) setName(draft.name)
+      if (typeof draft.whatsapp === 'string') setWhatsapp(draft.whatsapp)
+      if (Array.isArray(draft.assigned)) setAssigned(new Set(draft.assigned))
+      if (Array.isArray(draft.drops)) setDrops(new Set(draft.drops))
+      if (Array.isArray(draft.adds)) setAdds(new Set(draft.adds))
+      if (typeof draft.step === 'number' && draft.step >= 1 && draft.step <= 4)
+        setStep(draft.step as Step)
+      /* eslint-enable react-hooks/set-state-in-effect */
+    } catch {
+      // ignore malformed drafts
+    }
+  }, [isReturning])
+
+  // Persist every change.
+  useEffect(() => {
+    if (!restoredRef.current) return
+    try {
+      const draft: Draft = {
+        name,
+        whatsapp,
+        assigned: [...assigned],
+        drops: [...drops],
+        adds: [...adds],
+        step,
+      }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+    } catch {
+      // ignore quota / private-mode errors
+    }
+  }, [name, whatsapp, assigned, drops, adds, step])
+
+  function clearDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY)
+    } catch {
+      // noop
+    }
+  }
 
   const grouped = useMemo(() => {
     const m: Record<Term, Course[]> = { summer: [], september: [], term4: [] }
@@ -196,6 +258,7 @@ export function ProfileForm({
           setStep={setStep}
           canContinue={canContinue[step]}
           pending={pending}
+          onSave={clearDraft}
         />
       </form>
     </div>
@@ -261,15 +324,17 @@ function StepFooter({
   setStep,
   canContinue,
   pending,
+  onSave,
 }: {
   step: Step
   setStep: (s: Step) => void
   canContinue: boolean
   pending: boolean
+  onSave: () => void
 }) {
   const isLast = step === 4
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
       <button
         type="button"
         onClick={() => setStep(Math.max(1, step - 1) as Step)}
@@ -281,8 +346,9 @@ function StepFooter({
       {isLast ? (
         <button
           type="submit"
+          onClick={onSave}
           disabled={pending}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? 'Saving…' : 'Save and view the board'}
         </button>
@@ -291,7 +357,7 @@ function StepFooter({
           type="button"
           onClick={() => setStep(Math.min(4, step + 1) as Step)}
           disabled={!canContinue}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Continue →
         </button>

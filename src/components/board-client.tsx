@@ -31,11 +31,22 @@ interface Props {
   currentUserId: string
   courses: BoardCourse[]
   listings: BoardListing[]
+  myCourseIds: string[]
 }
 
-export function BoardClient({ currentUserId, courses, listings }: Props) {
+type ScopeFilter = 'all' | 'mine' | 'others'
+
+export function BoardClient({
+  currentUserId,
+  courses,
+  listings,
+  myCourseIds,
+}: Props) {
   const [q, setQ] = useState('')
   const [courseFilter, setCourseFilter] = useState<string>('all')
+  const [scope, setScope] = useState<ScopeFilter>('all')
+
+  const myCourseSet = useMemo(() => new Set(myCourseIds), [myCourseIds])
 
   const courseIdsWithListings = useMemo(() => {
     const s = new Set<string>()
@@ -43,11 +54,34 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
     return s
   }, [listings])
 
+  // Add-demand per course: how many people want to add it. Drives "Most wanted".
+  const addDemand = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const l of listings) {
+      if (l.type !== 'want_add') continue
+      m.set(l.course_id, (m.get(l.course_id) ?? 0) + 1)
+    }
+    return m
+  }, [listings])
+
+  const mostWanted = useMemo(() => {
+    const items = [...addDemand.entries()]
+      .map(([id, n]) => ({ course: courses.find((c) => c.id === id), n }))
+      .filter((x): x is { course: BoardCourse; n: number } => Boolean(x.course))
+    items.sort((a, b) => b.n - a.n || a.course.name.localeCompare(b.course.name))
+    return items.slice(0, 5)
+  }, [addDemand, courses])
+
   const filteredCourses = useMemo(() => {
     const term = q.trim().toLowerCase()
     return courses
       .filter((c) => courseIdsWithListings.has(c.id))
       .filter((c) => (courseFilter === 'all' ? true : c.id === courseFilter))
+      .filter((c) => {
+        if (scope === 'mine') return myCourseSet.has(c.id)
+        if (scope === 'others') return !myCourseSet.has(c.id)
+        return true
+      })
       .filter((c) => {
         if (!term) return true
         return (
@@ -56,7 +90,7 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
           (c.professor ?? '').toLowerCase().includes(term)
         )
       })
-  }, [courses, courseIdsWithListings, q, courseFilter])
+  }, [courses, courseIdsWithListings, q, courseFilter, scope, myCourseSet])
 
   const listingsByCourse = useMemo(() => {
     const m: Record<string, { drop: BoardListing[]; add: BoardListing[] }> = {}
@@ -93,6 +127,14 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {mostWanted.length > 0 && (
+        <MostWantedStrip
+          items={mostWanted}
+          onPick={(id) => setCourseFilter(id)}
+          activeId={courseFilter}
+        />
+      )}
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-zinc-500">
           <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
@@ -126,6 +168,8 @@ export function BoardClient({ currentUserId, courses, listings }: Props) {
           />
         </div>
       </div>
+
+      <ScopeTabs scope={scope} setScope={setScope} myCount={myCourseSet.size} />
 
       {filteredCourses.length === 0 ? (
         <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
@@ -325,5 +369,96 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
       </div>
       {error && <span className="text-[11px] text-red-600">{error}</span>}
     </li>
+  )
+}
+
+function MostWantedStrip({
+  items,
+  onPick,
+  activeId,
+}: {
+  items: { course: BoardCourse; n: number }[]
+  onPick: (id: string) => void
+  activeId: string
+}) {
+  return (
+    <section className="flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-emerald-800">
+        Most wanted right now
+      </h3>
+      <ul className="flex flex-wrap gap-1.5">
+        {items.map(({ course, n }) => {
+          const isActive = activeId === course.id
+          return (
+            <li key={course.id}>
+              <button
+                type="button"
+                onClick={() => onPick(isActive ? 'all' : course.id)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                  isActive
+                    ? 'border-emerald-700 bg-emerald-700 text-white'
+                    : 'border-emerald-300 bg-white text-emerald-900 hover:border-emerald-500'
+                }`}
+              >
+                <span className="truncate">{course.name}</span>
+                <span
+                  className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
+                    isActive ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {n}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function ScopeTabs({
+  scope,
+  setScope,
+  myCount,
+}: {
+  scope: 'all' | 'mine' | 'others'
+  setScope: (s: 'all' | 'mine' | 'others') => void
+  myCount: number
+}) {
+  const options: { id: 'all' | 'mine' | 'others'; label: string; subtitle?: string }[] = [
+    { id: 'all', label: 'All courses' },
+    { id: 'mine', label: 'My courses', subtitle: myCount > 0 ? `${myCount}` : undefined },
+    { id: 'others', label: 'Others' },
+  ]
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-0.5 self-start">
+      {options.map((o) => {
+        const isActive = scope === o.id
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => setScope(o.id)}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition ${
+              isActive
+                ? 'bg-zinc-900 text-white shadow-sm'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            <span>{o.label}</span>
+            {o.subtitle && (
+              <span
+                className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'
+                }`}
+              >
+                {o.subtitle}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
   )
 }

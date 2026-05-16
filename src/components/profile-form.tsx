@@ -325,7 +325,7 @@ function Stepper({
         const content = (
           <span className={`${baseClasses} ${stateClasses}`}>
             <span
-              className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
+              className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold leading-none ${
                 isActive
                   ? 'bg-white text-midnight'
                   : isDone
@@ -333,7 +333,9 @@ function Stepper({
                     : 'bg-jordy/20 text-midnight'
               }`}
             >
-              {isDone ? '✓' : s.id}
+              <span className="block translate-y-[0.5px]">
+                {isDone ? '✓' : s.id}
+              </span>
             </span>
             <span className="hidden sm:inline">{s.label}</span>
             <span className="sm:hidden">{s.short}</span>

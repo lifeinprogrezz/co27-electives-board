@@ -17,9 +17,24 @@ const serif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://co27electives.lifeinprogrezz.com',
+  ),
   title: 'co27.electives',
   description:
     'Trade Co27 ESADE electives with your cohort. No more refreshing eOffice during Add/Drop.',
+  openGraph: {
+    title: 'co27.electives',
+    description:
+      'Post what you’re dropping. See who wants it. ESADE Co27 Add/Drop helper.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'co27.electives',
+    description:
+      'Post what you’re dropping. See who wants it. ESADE Co27 Add/Drop helper.',
+  },
 }
 
 export default function RootLayout({

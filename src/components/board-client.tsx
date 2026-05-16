@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { TERM_LABELS, type Term } from '@/lib/types'
 import { closeListing, deleteListing } from '@/lib/listings'
 
@@ -155,11 +156,16 @@ export function BoardClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-zinc-500">
           <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
           <span className="font-medium text-emerald-700">{totalAdds}</span> adds
         </p>
+        <RefreshButton />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <span className="hidden sm:inline" />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={courseFilter}
@@ -491,5 +497,50 @@ function ScopeTabs({
         )
       })}
     </div>
+  )
+}
+
+function RefreshButton() {
+  const router = useRouter()
+  const [isRefreshing, startTransition] = useTransition()
+  const [lastRefreshed, setLastRefreshed] = useState<number>(() => Date.now())
+  const [ago, setAgo] = useState('just now')
+
+  useEffect(() => {
+    const tick = () => {
+      const secs = Math.floor((Date.now() - lastRefreshed) / 1000)
+      if (secs < 5) setAgo('just now')
+      else if (secs < 60) setAgo(`${secs}s ago`)
+      else setAgo(`${Math.floor(secs / 60)}m ago`)
+    }
+    tick()
+    const id = setInterval(tick, 5000)
+    return () => clearInterval(id)
+  }, [lastRefreshed])
+
+  function onClick() {
+    startTransition(() => {
+      router.refresh()
+      setLastRefreshed(Date.now())
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isRefreshing}
+      className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+      title="Refresh the board to pull in new listings"
+    >
+      <span
+        aria-hidden
+        className={`inline-block ${isRefreshing ? 'animate-spin' : ''}`}
+      >
+        ⟳
+      </span>
+      <span>Refresh</span>
+      <span className="text-zinc-400">· {ago}</span>
+    </button>
   )
 }

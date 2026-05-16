@@ -218,8 +218,24 @@ export function CalendarClient({ rows }: Props) {
     adding: rows.filter((r) => r.status === 'adding').length,
   }
 
+  // ECTS math: now = kept + dropping (everything currently in your allocation).
+  // delta = adding - dropping. after = now + delta = kept + adding.
+  const ectsKept = sumEcts(rows, 'kept')
+  const ectsDropping = sumEcts(rows, 'dropping')
+  const ectsAdding = sumEcts(rows, 'adding')
+  const ectsNow = ectsKept + ectsDropping
+  const ectsAfter = ectsKept + ectsAdding
+  const ectsDelta = ectsAfter - ectsNow
+
   return (
     <div className="flex flex-col gap-5">
+      <CreditsCounter
+        now={ectsNow}
+        after={ectsAfter}
+        delta={ectsDelta}
+        droppingEcts={ectsDropping}
+        addingEcts={ectsAdding}
+      />
       <Legend counts={counts} />
 
       <div className="flex flex-col gap-7">
@@ -616,4 +632,83 @@ function formatLongDate(iso: string): string {
     day: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+function sumEcts(rows: CalendarRow[], status: CalendarStatus): number {
+  return rows.filter((r) => r.status === status).reduce((s, r) => s + r.ects, 0)
+}
+
+function fmtEcts(n: number): string {
+  return Number.isInteger(n) ? n.toString() : n.toFixed(1).replace(/\.0$/, '')
+}
+
+function CreditsCounter({
+  now,
+  after,
+  delta,
+  droppingEcts,
+  addingEcts,
+}: {
+  now: number
+  after: number
+  delta: number
+  droppingEcts: number
+  addingEcts: number
+}) {
+  const hasChanges = droppingEcts > 0 || addingEcts > 0
+  const deltaSign = delta > 0 ? '+' : delta < 0 ? '−' : ''
+  const deltaColor =
+    delta > 0
+      ? 'text-emerald-700'
+      : delta < 0
+        ? 'text-rose-700'
+        : 'text-zinc-500'
+
+  return (
+    <section className="rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+              Now
+            </span>
+            <span className="text-xl font-semibold text-zinc-900 sm:text-2xl">
+              {fmtEcts(now)} <span className="text-xs font-medium text-zinc-500">ECTS</span>
+            </span>
+          </div>
+          {hasChanges && (
+            <>
+              <span className="text-zinc-300">→</span>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                  After changes
+                </span>
+                <span className="text-xl font-semibold text-zinc-900 sm:text-2xl">
+                  {fmtEcts(after)} <span className="text-xs font-medium text-zinc-500">ECTS</span>
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {hasChanges && (
+          <div className="flex flex-col items-end gap-0.5 text-[11px] sm:text-xs">
+            <span className={`font-semibold ${deltaColor}`}>
+              {deltaSign}
+              {fmtEcts(Math.abs(delta))} ECTS net
+            </span>
+            <span className="text-zinc-500">
+              {droppingEcts > 0 && (
+                <span className="text-rose-700">−{fmtEcts(droppingEcts)} dropping</span>
+              )}
+              {droppingEcts > 0 && addingEcts > 0 && <span> · </span>}
+              {addingEcts > 0 && (
+                <span className="text-emerald-700">+{fmtEcts(addingEcts)} adding</span>
+              )}
+            </span>
+          </div>
+        )}
+      </div>
+    </section>
+  )
 }

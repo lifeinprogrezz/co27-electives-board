@@ -413,7 +413,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   }
 
   function onDelete() {
-    if (!confirm('Delete this listing? This cannot be undone.')) return
+    if (!confirm('Remove this listing? This cannot be undone.')) return
     setError(null)
     startTransition(async () => {
       const result = await deleteListing(listing.id)
@@ -435,18 +435,18 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
               onClick={onClose}
               disabled={isPending}
               className="rounded-md border border-midnight/20 bg-white px-2 py-1 text-xs font-medium text-midnight transition hover:bg-jordy/15 disabled:opacity-50"
-              title="Mark this listing as done; it stops showing on the board."
+              title="Mark as traded. Stops showing on the board but keeps the record."
             >
-              Done
+              Traded
             </button>
             <button
               type="button"
               onClick={onDelete}
               disabled={isPending}
-              aria-label="Delete listing"
+              title="Remove this listing permanently."
               className="rounded-md border border-midnight/20 bg-white px-2 py-1 text-xs font-medium text-midnight transition hover:border-robroy-deep hover:bg-robroy/20 hover:text-robroy-deep disabled:opacity-50"
             >
-              ✕
+              Remove
             </button>
           </div>
         ) : revealed ? (

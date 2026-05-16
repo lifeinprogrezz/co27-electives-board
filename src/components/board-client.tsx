@@ -34,7 +34,7 @@ interface Props {
   myCourseIds: string[]
 }
 
-type ScopeFilter = 'all' | 'mine' | 'others'
+type ScopeFilter = 'all' | 'mine'
 
 export function BoardClient({
   currentUserId,
@@ -45,6 +45,7 @@ export function BoardClient({
   const [q, setQ] = useState('')
   const [courseFilter, setCourseFilter] = useState<string>('all')
   const [scope, setScope] = useState<ScopeFilter>('all')
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const myCourseSet = useMemo(() => new Set(myCourseIds), [myCourseIds])
 
@@ -54,32 +55,43 @@ export function BoardClient({
     return s
   }, [listings])
 
-  // Add-demand per course: how many people want to add it. Drives "Most wanted".
-  const addDemand = useMemo(() => {
+  // Total interest per course = drops + adds. Drives the default sort and
+  // the count badges shown on each collapsed card.
+  const interestByCourse = useMemo(() => {
     const m = new Map<string, number>()
-    for (const l of listings) {
-      if (l.type !== 'want_add') continue
-      m.set(l.course_id, (m.get(l.course_id) ?? 0) + 1)
-    }
+    for (const l of listings) m.set(l.course_id, (m.get(l.course_id) ?? 0) + 1)
     return m
   }, [listings])
 
-  const mostWanted = useMemo(() => {
-    const items = [...addDemand.entries()]
-      .map(([id, n]) => ({ course: courses.find((c) => c.id === id), n }))
-      .filter((x): x is { course: BoardCourse; n: number } => Boolean(x.course))
-    items.sort((a, b) => b.n - a.n || a.course.name.localeCompare(b.course.name))
-    return items.slice(0, 5)
-  }, [addDemand, courses])
+  // Auto-expand the single course the user explicitly filtered to.
+  function pickCourseFilter(id: string) {
+    setCourseFilter(id)
+    if (id !== 'all') {
+      setExpanded((prev) => {
+        if (prev.has(id)) return prev
+        const next = new Set(prev)
+        next.add(id)
+        return next
+      })
+    }
+  }
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const filteredCourses = useMemo(() => {
     const term = q.trim().toLowerCase()
-    return courses
+    const out = courses
       .filter((c) => courseIdsWithListings.has(c.id))
       .filter((c) => (courseFilter === 'all' ? true : c.id === courseFilter))
       .filter((c) => {
         if (scope === 'mine') return myCourseSet.has(c.id)
-        if (scope === 'others') return !myCourseSet.has(c.id)
         return true
       })
       .filter((c) => {
@@ -90,7 +102,23 @@ export function BoardClient({
           (c.professor ?? '').toLowerCase().includes(term)
         )
       })
-  }, [courses, courseIdsWithListings, q, courseFilter, scope, myCourseSet])
+    // Sort by total interest desc, ties alphabetical.
+    out.sort((a, b) => {
+      const ia = interestByCourse.get(a.id) ?? 0
+      const ib = interestByCourse.get(b.id) ?? 0
+      if (ia !== ib) return ib - ia
+      return a.name.localeCompare(b.name)
+    })
+    return out
+  }, [
+    courses,
+    courseIdsWithListings,
+    q,
+    courseFilter,
+    scope,
+    myCourseSet,
+    interestByCourse,
+  ])
 
   const listingsByCourse = useMemo(() => {
     const m: Record<string, { drop: BoardListing[]; add: BoardListing[] }> = {}
@@ -127,14 +155,6 @@ export function BoardClient({
 
   return (
     <div className="flex flex-col gap-4">
-      {mostWanted.length > 0 && (
-        <MostWantedStrip
-          items={mostWanted}
-          onPick={(id) => setCourseFilter(id)}
-          activeId={courseFilter}
-        />
-      )}
-
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-zinc-500">
           <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
@@ -143,7 +163,7 @@ export function BoardClient({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={courseFilter}
-            onChange={(e) => setCourseFilter(e.target.value)}
+            onChange={(e) => pickCourseFilter(e.target.value)}
             className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-auto"
           >
             <option value="all">All courses</option>
@@ -195,6 +215,8 @@ export function BoardClient({
                         drop={bucket?.drop ?? []}
                         add={bucket?.add ?? []}
                         currentUserId={currentUserId}
+                        isExpanded={expanded.has(c.id)}
+                        onToggle={() => toggleExpanded(c.id)}
                       />
                     )
                   })}
@@ -221,38 +243,93 @@ function CourseCard({
   drop,
   add,
   currentUserId,
+  isExpanded,
+  onToggle,
 }: {
   course: BoardCourse
   drop: BoardListing[]
   add: BoardListing[]
   currentUserId: string
+  isExpanded: boolean
+  onToggle: () => void
 }) {
+  const total = drop.length + add.length
   return (
-    <article className="rounded-lg border border-zinc-200 p-4">
-      <header className="flex flex-col gap-1">
-        <h3 className="text-base font-semibold text-zinc-900">{course.name}</h3>
-        <p className="text-xs text-zinc-500">
-          {course.class_code ? `${course.class_code} · ` : ''}
-          {course.ects} ECTS · {course.schedule_text ?? '—'}
-          {course.professor ? ` · ${course.professor}` : ''}
-        </p>
-      </header>
+    <article className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-zinc-50"
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h3 className="truncate text-base font-semibold text-zinc-900">
+            {course.name}
+          </h3>
+          <p className="truncate text-xs text-zinc-500">
+            {course.class_code ? `${course.class_code} · ` : ''}
+            {course.ects} ECTS · {course.schedule_text ?? '—'}
+            {course.professor ? ` · ${course.professor}` : ''}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5 text-xs font-medium">
+          <PoolBadge tone="red" count={drop.length} label="drop" />
+          <PoolBadge tone="emerald" count={add.length} label="add" />
+          <span
+            aria-hidden
+            className={`ml-1 inline-block text-zinc-400 transition-transform ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
+          >
+            ▾
+          </span>
+        </div>
+      </button>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ListingColumn
-          label="Has & wants to drop"
-          tone="red"
-          listings={drop}
-          currentUserId={currentUserId}
-        />
-        <ListingColumn
-          label="Wants to add"
-          tone="emerald"
-          listings={add}
-          currentUserId={currentUserId}
-        />
-      </div>
+      {isExpanded && (
+        <div className="grid grid-cols-1 gap-3 border-t border-zinc-100 p-4 sm:grid-cols-2">
+          <ListingColumn
+            label="Has & wants to drop"
+            tone="red"
+            listings={drop}
+            currentUserId={currentUserId}
+          />
+          <ListingColumn
+            label="Wants to add"
+            tone="emerald"
+            listings={add}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
+
+      {total === 0 && !isExpanded && null}
     </article>
+  )
+}
+
+function PoolBadge({
+  tone,
+  count,
+  label,
+}: {
+  tone: 'red' | 'emerald'
+  count: number
+  label: string
+}) {
+  const active = count > 0
+  const cls = active
+    ? tone === 'red'
+      ? 'border-red-200 bg-red-50 text-red-700'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : 'border-zinc-200 bg-zinc-50 text-zinc-400'
+  return (
+    <span
+      className={`inline-flex min-w-[2.25rem] items-center justify-center gap-1 rounded-full border px-2 py-0.5 ${cls}`}
+    >
+      <span className="font-semibold">{count}</span>
+      <span className="text-[10px] uppercase tracking-wider">{label}</span>
+    </span>
   )
 }
 
@@ -372,64 +449,18 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   )
 }
 
-function MostWantedStrip({
-  items,
-  onPick,
-  activeId,
-}: {
-  items: { course: BoardCourse; n: number }[]
-  onPick: (id: string) => void
-  activeId: string
-}) {
-  return (
-    <section className="flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-emerald-800">
-        Most wanted right now
-      </h3>
-      <ul className="flex flex-wrap gap-1.5">
-        {items.map(({ course, n }) => {
-          const isActive = activeId === course.id
-          return (
-            <li key={course.id}>
-              <button
-                type="button"
-                onClick={() => onPick(isActive ? 'all' : course.id)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                  isActive
-                    ? 'border-emerald-700 bg-emerald-700 text-white'
-                    : 'border-emerald-300 bg-white text-emerald-900 hover:border-emerald-500'
-                }`}
-              >
-                <span className="truncate">{course.name}</span>
-                <span
-                  className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
-                    isActive ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
-                  }`}
-                >
-                  {n}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
-}
-
 function ScopeTabs({
   scope,
   setScope,
   myCount,
 }: {
-  scope: 'all' | 'mine' | 'others'
-  setScope: (s: 'all' | 'mine' | 'others') => void
+  scope: 'all' | 'mine'
+  setScope: (s: 'all' | 'mine') => void
   myCount: number
 }) {
-  const options: { id: 'all' | 'mine' | 'others'; label: string; subtitle?: string }[] = [
+  const options: { id: 'all' | 'mine'; label: string; subtitle?: string }[] = [
     { id: 'all', label: 'All courses' },
     { id: 'mine', label: 'My courses', subtitle: myCount > 0 ? `${myCount}` : undefined },
-    { id: 'others', label: 'Others' },
   ]
   return (
     <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-0.5 self-start">

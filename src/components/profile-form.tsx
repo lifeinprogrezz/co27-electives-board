@@ -1,6 +1,13 @@
 'use client'
 
-import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { saveProfile, type SaveProfileState } from '@/lib/profile'
 import { TERM_LABELS, type Course, type Term } from '@/lib/types'
 
@@ -192,20 +199,13 @@ export function ProfileForm({
 
   const formRef = useRef<HTMLFormElement | null>(null)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    // Only the Save button is allowed to submit. Any other path (Enter
-    // in an input, errant button without explicit type) is blocked here.
-    if (e.nativeEvent instanceof SubmitEvent) {
-      const submitter = e.nativeEvent.submitter as HTMLElement | null
-      if (!submitter?.dataset?.save) {
-        e.preventDefault()
-        return
-      }
-    } else {
-      e.preventDefault()
-      return
-    }
+  // The form has no `action` prop. The ONLY thing that triggers a save is
+  // an explicit click on the Save button below, which invokes this handler.
+  function onSaveClick() {
+    if (!formRef.current) return
+    const formData = new FormData(formRef.current)
     clearDraft()
+    startTransition(() => action(formData))
   }
 
   return (
@@ -219,8 +219,7 @@ export function ProfileForm({
 
       <form
         ref={formRef}
-        action={action}
-        onSubmit={handleSubmit}
+        onSubmit={(e) => e.preventDefault()}
         className="flex flex-col gap-5"
       >
         {/* Hidden fields keep ALL state in the form on submit. */}
@@ -281,6 +280,7 @@ export function ProfileForm({
           setStep={setStep}
           canContinue={canContinue[step]}
           pending={pending}
+          onSave={onSaveClick}
         />
       </form>
     </div>
@@ -346,11 +346,13 @@ function StepFooter({
   setStep,
   canContinue,
   pending,
+  onSave,
 }: {
   step: Step
   setStep: (s: Step) => void
   canContinue: boolean
   pending: boolean
+  onSave: () => void
 }) {
   const isLast = step === 4
   return (
@@ -365,8 +367,8 @@ function StepFooter({
       </button>
       {isLast ? (
         <button
-          type="submit"
-          data-save="true"
+          type="button"
+          onClick={onSave}
           disabled={pending}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
         >

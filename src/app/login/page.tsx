@@ -10,10 +10,14 @@ export default async function LoginPage({
   const { error } = await searchParams
 
   return (
-    <div className="relative isolate mx-auto flex max-w-md flex-col gap-7 overflow-hidden">
+    <div className="relative mx-auto flex max-w-md flex-col gap-7">
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-24 -top-32 -z-10 h-80 w-80 rounded-full bg-jordy opacity-35 blur-3xl sm:-right-16 sm:h-96 sm:w-96"
+        className="pointer-events-none fixed -right-[20vw] -top-[20vw] -z-10 h-[80vw] w-[80vw] rounded-full bg-jordy opacity-30 blur-3xl sm:-right-[10vw] sm:-top-[15vw] sm:h-[60vw] sm:w-[60vw]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -bottom-[25vw] -left-[20vw] -z-10 h-[60vw] w-[60vw] rounded-full bg-robroy opacity-15 blur-3xl sm:h-[45vw] sm:w-[45vw]"
       />
 
       <div className="flex items-center">

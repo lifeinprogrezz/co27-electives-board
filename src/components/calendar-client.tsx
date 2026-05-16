@@ -316,7 +316,7 @@ function MonthBlock({
     <section className="flex flex-col gap-2.5">
       <header className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold tracking-tight text-midnight sm:text-xl">
+          <h2 className="text-2xl font-bold tracking-tight text-midnight sm:text-3xl">
             {month.name} {month.year}
           </h2>
           {!hasAny && <span className="text-[11px] text-ink/40">no sessions</span>}
@@ -637,38 +637,51 @@ function CreditsCounter({
 
   return (
     <section className="rounded-xl border border-midnight/15 bg-white p-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-end gap-3">
-          <Metric label="Now" value={fmtEcts(now)} />
-          {hasChanges && (
-            <>
-              <span className="pb-2 text-midnight/30">→</span>
-              <Metric label="After changes" value={fmtEcts(after)} />
-            </>
-          )}
-        </div>
-
+      <div className="flex items-end gap-3">
+        <Metric label="Now" value={fmtEcts(now)} />
         {hasChanges && (
-          <span
-            className={`inline-flex items-center rounded-full bg-jordy/15 px-3 py-1.5 text-sm font-semibold ${deltaColor}`}
-          >
-            {deltaSign}
-            {fmtEcts(Math.abs(delta))} ECTS net
-          </span>
+          <>
+            <span className="pb-2 text-midnight/30">→</span>
+            <Metric
+              label="After changes"
+              value={fmtEcts(after)}
+              delta={
+                delta === 0
+                  ? null
+                  : `${deltaSign}${fmtEcts(Math.abs(delta))}`
+              }
+              deltaColor={deltaColor}
+            />
+          </>
         )}
       </div>
     </section>
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  delta,
+  deltaColor,
+}: {
+  label: string
+  value: string
+  delta?: string | null
+  deltaColor?: string
+}) {
   return (
     <div className="flex flex-col">
       <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
         {label}
       </span>
       <span className="text-3xl font-semibold leading-none tracking-tight text-midnight">
-        {value}{' '}
+        {value}
+        {delta && (
+          <span className={`ml-1.5 align-top text-sm font-semibold ${deltaColor ?? ''}`}>
+            {delta}
+          </span>
+        )}{' '}
         <span className="text-xs font-medium text-ink/60">ECTS</span>
       </span>
     </div>

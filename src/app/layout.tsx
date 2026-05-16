@@ -32,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${sans.variable} ${serif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-ink font-sans">
+      <body className="isolate min-h-full flex flex-col bg-background text-ink font-sans">
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
           {children}
         </main>

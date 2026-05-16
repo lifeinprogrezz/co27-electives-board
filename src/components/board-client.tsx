@@ -395,6 +395,7 @@ function ListingColumn({
 
 function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   const [revealed, setRevealed] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const u = listing.user
@@ -403,6 +404,17 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   const hasWa = waDigits.length >= 6
   const contactHref = hasWa ? `https://wa.me/${waDigits}` : `mailto:${u.email}`
   const contactLabel = hasWa ? 'WhatsApp' : 'Email'
+  const copyValue = hasWa ? `+${waDigits}` : u.email
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(copyValue)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch {
+      setError('Could not copy. Long-press the number instead.')
+    }
+  }
 
   function onClose() {
     setError(null)
@@ -450,14 +462,24 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
             </button>
           </div>
         ) : revealed ? (
-          <a
-            href={contactHref}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full border border-midnight bg-midnight px-3 py-1 text-xs font-medium text-white transition hover:bg-[#001d52]"
-          >
-            {contactLabel}
-          </a>
+          <div className="flex shrink-0 items-center gap-1">
+            <a
+              href={contactHref}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-midnight bg-midnight px-3 py-1 text-xs font-medium text-white transition hover:bg-[#001d52]"
+            >
+              {contactLabel}
+            </a>
+            <button
+              type="button"
+              onClick={onCopy}
+              title={`Copy ${hasWa ? 'number' : 'email'} to clipboard`}
+              className="rounded-full border border-midnight/20 bg-white px-3 py-1 text-xs font-medium text-midnight transition hover:bg-jordy/15"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
         ) : (
           <button
             type="button"

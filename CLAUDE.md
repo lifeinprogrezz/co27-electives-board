@@ -68,6 +68,6 @@ supabase/
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-- `NEXT_PUBLIC_SITE_URL` (e.g. `https://board.lifeinprogrezz.com`) — used for magic-link redirect
+- `NEXT_PUBLIC_SITE_URL` (e.g. `https://co27electives.lifeinprogrezz.com`) — used for magic-link redirect
 
 Node 20.17 raises an EBADENGINE warning on one dev dep that wants >=20.19. Non-blocking for now.

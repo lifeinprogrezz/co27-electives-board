@@ -48,7 +48,7 @@ In **Authentication → URL Configuration**:
 
 - **Site URL**: `http://localhost:3000` (add the production URL once you deploy)
 - **Redirect URLs**: include `http://localhost:3000/auth/callback` and any
-  production callback (e.g. `https://board.lifeinprogrezz.com/auth/callback`).
+  production callback (e.g. `https://co27electives.lifeinprogrezz.com/auth/callback`).
 
 In **Authentication → Providers → Email**, ensure **Enable Email provider** is on
 and **Confirm email** is on (magic-link mode).

@@ -39,6 +39,7 @@ yarn-error.log*
 
 # local session log (kept on disk, never published)
 SESSION_LOG.md
+LAUNCH_POSTS.md
 
 # Playwright smoke-test artifacts
 .playwright-mcp/

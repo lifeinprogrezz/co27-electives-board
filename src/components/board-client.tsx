@@ -165,33 +165,31 @@ export function BoardClient({
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <select
-            value={courseFilter}
-            onChange={(e) => pickCourseFilter(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-auto"
-          >
-            <option value="all">All courses</option>
-            {(['summer', 'september', 'term4'] as Term[]).map((term) =>
-              coursesByTerm[term].length === 0 ? null : (
-                <optgroup key={term} label={TERM_LABELS[term]}>
-                  {coursesByTerm[term].map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ),
-            )}
-          </select>
-          <input
-            type="search"
-            placeholder="Search name or professor…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-56"
-          />
-        </div>
+        <select
+          value={courseFilter}
+          onChange={(e) => pickCourseFilter(e.target.value)}
+          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-auto"
+        >
+          <option value="all">All courses</option>
+          {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+            coursesByTerm[term].length === 0 ? null : (
+              <optgroup key={term} label={TERM_LABELS[term]}>
+                {coursesByTerm[term].map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
+            ),
+          )}
+        </select>
+        <input
+          type="search"
+          placeholder="Search name or professor…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:flex-1"
+        />
       </div>
 
       <ScopeTabs scope={scope} setScope={setScope} myCount={myCourseSet.size} />

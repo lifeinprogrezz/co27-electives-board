@@ -1,9 +1,20 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Geist, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import { Footer } from '@/components/footer'
 
-const sans = Geist({ variable: '--font-sans', subsets: ['latin'] })
+const sans = Geist({
+  variable: '--font-geist',
+  weight: ['400', '500'],
+  subsets: ['latin'],
+})
+
+const serif = Instrument_Serif({
+  variable: '--font-instrument-serif',
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
   title: 'Co27 Electives Board',
@@ -17,8 +28,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${sans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white text-zinc-900">
+    <html
+      lang="en"
+      className={`${sans.variable} ${serif.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-background text-ink font-sans">
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
           {children}
         </main>

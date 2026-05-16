@@ -2,15 +2,22 @@
 
 @theme inline {
   --color-background: #ffffff;
-  --color-foreground: #18181b;
-  --font-sans: var(--font-sans);
-  --color-accent: #c8102e; /* ESADE red */
+  --color-foreground: #002d73;
+
+  --color-midnight: #002d73;
+  --color-robroy: #efbe73;
+  --color-robroy-deep: #c8973f;
+  --color-jordy: #73beef;
+  --color-ink: #3a4a66;
+
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
 }
 
 html, body {
   background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
 /* Mobile-first: ensure inputs don't get auto-zoom on iOS */

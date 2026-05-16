@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { TiltCard } from '@/components/tilt-card'
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -10,38 +11,55 @@ export default async function LandingPage() {
   if (user) redirect('/board')
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Co27 Electives Board
+    <div className="relative isolate flex flex-col gap-10 overflow-hidden">
+      {/* Ambient Jordy Blue blob — atmosphere only, never focal */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-32 -z-10 h-80 w-80 rounded-full bg-jordy opacity-35 blur-3xl sm:-right-16 sm:h-96 sm:w-96"
+      />
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between">
+        <span className="font-serif text-[20px] italic leading-none text-midnight">
+          co27.exchange
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-midnight px-2.5 py-1 text-[11px] font-medium text-white">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
+          live
+        </span>
+      </div>
+
+      {/* Hero */}
+      <header className="flex flex-col gap-5 pt-4 sm:pt-8">
+        <h1 className="font-serif text-[48px] leading-[0.92] tracking-[-0.02em] text-midnight sm:text-[64px]">
+          trade <em className="not-italic font-serif italic text-robroy-deep">your</em> electives.
         </h1>
-        <p className="text-base text-zinc-600">
-          Trade Co27 electives with your cohort. No more refreshing eOffice.
+        <p className="max-w-prose text-sm leading-relaxed text-ink">
+          Co27 only. Post what you&rsquo;re dropping, see who wants it, settle the
+          trade on WhatsApp. No more refreshing eOffice at 8 AM.
         </p>
       </header>
 
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm leading-relaxed text-zinc-700 sm:p-5">
-        <p className="font-medium text-zinc-900">How it works</p>
-        <ol className="mt-2 list-decimal space-y-1 pl-5">
-          <li>Sign in with your ESADE email.</li>
-          <li>Post which electives you want to drop, and which you want to add.</li>
-          <li>See who else is looking for what — and DM them on WhatsApp.</li>
-        </ol>
-      </section>
+      {/* Cards demo */}
+      <div className="grid grid-cols-2 gap-4 sm:max-w-md">
+        <TiltCard variant="drop" label="Drop" title="Branding" />
+        <TiltCard variant="want" label="Want" title="Neg. II" />
+      </div>
 
+      {/* CTA */}
       <Link
         href="/login"
-        className="w-full rounded-md bg-zinc-900 px-4 py-3 text-center text-base font-medium text-white transition hover:bg-zinc-800"
+        className="inline-flex w-full items-center justify-center rounded-full bg-midnight px-6 py-3.5 font-serif text-lg italic text-white transition hover:bg-[#001d52] sm:w-auto sm:self-start"
       >
-        Sign in with ESADE email
+        get started &rarr;
       </Link>
 
-      <p className="text-xs leading-relaxed text-zinc-500">
-        This is a peer-built tool to help Co27 students coordinate elective trades during
-        Add/Drop. We store your ESADE email, name, WhatsApp number (if you choose to share
-        it), your assigned electives, and the courses you want to drop or add. We never
-        share data with third parties. You can delete your account anytime from your
-        profile page.
+      {/* Quiet privacy line */}
+      <p className="max-w-prose pt-2 text-xs leading-relaxed text-ink/70">
+        Peer-built for Co27. We store your ESADE email, name, WhatsApp number
+        (if you share it), your assigned electives, and what you want to
+        drop or add. Never shared with third parties. Delete your account
+        anytime from your profile.
       </p>
     </div>
   )

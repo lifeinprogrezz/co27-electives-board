@@ -45,34 +45,38 @@ const STATUS_STYLE: Record<
     text: string
     dot: string
     badge: string
+    chipText: string
     label: string
   }
 > = {
   kept: {
-    solid: 'bg-sky-500',
-    softBg: 'bg-sky-50',
-    border: 'border-sky-300',
-    text: 'text-sky-900',
-    dot: 'bg-sky-500',
-    badge: 'bg-sky-50 text-sky-800 border-sky-200',
+    solid: 'bg-jordy',
+    softBg: 'bg-jordy/15',
+    border: 'border-jordy',
+    text: 'text-midnight',
+    dot: 'bg-jordy',
+    badge: 'bg-jordy/25 text-midnight border-jordy/50',
+    chipText: 'text-midnight',
     label: 'Keeping',
   },
   dropping: {
-    solid: 'bg-rose-500',
-    softBg: 'bg-rose-50',
-    border: 'border-rose-300',
-    text: 'text-rose-900',
-    dot: 'bg-rose-500',
-    badge: 'bg-rose-50 text-rose-800 border-rose-200',
+    solid: 'bg-robroy',
+    softBg: 'bg-robroy/20',
+    border: 'border-robroy-deep',
+    text: 'text-robroy-deep',
+    dot: 'bg-robroy-deep',
+    badge: 'bg-robroy/30 text-midnight border-robroy-deep/50',
+    chipText: 'text-midnight',
     label: 'Dropping',
   },
   adding: {
-    solid: 'bg-emerald-500',
-    softBg: 'bg-emerald-50',
-    border: 'border-emerald-300',
-    text: 'text-emerald-900',
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    solid: 'bg-midnight',
+    softBg: 'bg-midnight/10',
+    border: 'border-midnight',
+    text: 'text-midnight',
+    dot: 'bg-midnight',
+    badge: 'bg-midnight text-white border-midnight',
+    chipText: 'text-white',
     label: 'Adding',
   },
 }
@@ -95,10 +99,9 @@ interface Props {
 }
 
 function abbreviate(name: string): string {
-  // First letter of each non-trivial word, max 3 chars.
   const ignore = new Set(['the', 'and', 'of', 'in', 'on', 'a', 'to', 'for', '&'])
   const cleaned = name
-    .replace(/\(.*?\)/g, '') // strip parens
+    .replace(/\(.*?\)/g, '')
     .replace(/[:,]/g, ' ')
   const parts = cleaned
     .split(/\s+/)
@@ -108,7 +111,6 @@ function abbreviate(name: string): string {
 }
 
 export function CalendarClient({ rows }: Props) {
-  // selectedDay holds a YYYY-MM-DD when the user taps a day; null otherwise.
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   const gridRows = rows.filter(
@@ -141,7 +143,6 @@ export function CalendarClient({ rows }: Props) {
           b.pm.push(tag)
       }
     }
-    // Continuous courses: stamp the track on every weekday in their range.
     for (const r of otherRows) {
       if (!r.start_date || !r.end_date) continue
       const code = codeByCourse.get(r.id) ?? ''
@@ -154,7 +155,7 @@ export function CalendarClient({ rows }: Props) {
         cursor.setUTCDate(cursor.getUTCDate() + 1)
       ) {
         const wd = cursor.getUTCDay() || 7
-        if (wd < 1 || wd > 5) continue // skip weekends
+        if (wd < 1 || wd > 5) continue
         const iso = cursor.toISOString().slice(0, 10)
         ensure(iso).continuous.push(tag)
       }
@@ -162,7 +163,6 @@ export function CalendarClient({ rows }: Props) {
     return m
   }, [gridRows, otherRows, codeByCourse])
 
-  /** Which day-grid rows have at least one session in YYYY-MM month. */
   const rowsByMonth = useMemo(() => {
     const m = new Map<string, CalendarRow[]>()
     for (const r of gridRows) {
@@ -178,7 +178,6 @@ export function CalendarClient({ rows }: Props) {
     return m
   }, [gridRows])
 
-  /** Continuous (online/long-range) rows active in each month. */
   const continuousByMonth = useMemo(() => {
     const m = new Map<string, CalendarRow[]>()
     for (const r of otherRows) {
@@ -199,11 +198,16 @@ export function CalendarClient({ rows }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-700">
-        <p className="font-medium text-zinc-900">Nothing on your calendar yet.</p>
-        <p className="mt-1">
+      <div className="rounded-2xl border border-midnight/15 bg-jordy/10 p-6 text-center text-sm text-ink">
+        <p className="font-serif text-xl italic text-midnight">
+          Nothing on your calendar yet.
+        </p>
+        <p className="mt-1.5">
           Mark your assigned electives in{' '}
-          <a href="/profile" className="underline">
+          <a
+            href="/profile"
+            className="text-midnight underline decoration-midnight/40 underline-offset-2 hover:decoration-midnight"
+          >
             your profile
           </a>{' '}
           to see them here.
@@ -212,8 +216,6 @@ export function CalendarClient({ rows }: Props) {
     )
   }
 
-  // ECTS math: now = kept + dropping (everything currently in your allocation).
-  // delta = adding - dropping. after = kept + adding.
   const ectsKept = sumEcts(rows, 'kept')
   const ectsDropping = sumEcts(rows, 'dropping')
   const ectsAdding = sumEcts(rows, 'adding')
@@ -250,7 +252,7 @@ export function CalendarClient({ rows }: Props) {
         })}
       </div>
 
-      <p className="text-[11px] leading-relaxed text-zinc-500">
+      <p className="text-[11px] leading-relaxed text-ink/60">
         Top half of each day = morning (AM); bottom half = afternoon (PM). Two
         courses in the same slot = side-by-side strips = clash. Tap any day for
         full details.
@@ -292,8 +294,6 @@ function MonthBlock({
   }
   while (cells.length % 5 !== 0) cells.push(null)
 
-  // Group monthRows + continuousRows by status for the header summary.
-  // Continuous rows get a "(online)" or "(continuous)" suffix in the line.
   const allInMonth = [...monthRows, ...continuousRows]
   const groups = {
     kept: allInMonth.filter((r) => r.status === 'kept'),
@@ -303,7 +303,6 @@ function MonthBlock({
   const continuousIds = new Set(continuousRows.map((r) => r.id))
   const hasAny = allInMonth.length > 0
 
-  // Selected day buckets (for the detail flyout).
   const selectedBuckets =
     selectedDay && selectedDay.startsWith(`${month.year}-${String(month.monthIdx + 1).padStart(2, '0')}`)
       ? byDate.get(selectedDay) ?? null
@@ -313,10 +312,10 @@ function MonthBlock({
     <section className="flex flex-col gap-2.5">
       <header className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
+          <h2 className="font-serif text-lg italic text-midnight sm:text-xl">
             {month.name} {month.year}
           </h2>
-          {!hasAny && <span className="text-[11px] text-zinc-400">no sessions</span>}
+          {!hasAny && <span className="text-[11px] text-ink/40">no sessions</span>}
         </div>
         {hasAny && (
           <div className="flex flex-col gap-1 text-[11px] sm:text-xs">
@@ -339,13 +338,12 @@ function MonthBlock({
         )}
       </header>
 
-
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        <div className="grid grid-cols-5 border-b border-zinc-200 bg-zinc-50">
+      <div className="overflow-hidden rounded-xl border border-midnight/15 bg-white">
+        <div className="grid grid-cols-5 border-b border-midnight/10 bg-jordy/5">
           {WEEKDAY_LABELS.map((w) => (
             <div
               key={w}
-              className="px-1 py-1.5 text-center text-[10px] font-medium uppercase tracking-wider text-zinc-500 sm:text-xs"
+              className="px-1 py-1.5 text-center text-[10px] font-medium uppercase tracking-wider text-ink/60 sm:text-xs"
             >
               {w}
             </div>
@@ -395,13 +393,13 @@ function MonthGroupLine({
         <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
         {style.label}:
       </span>
-      <span className="text-zinc-700">
+      <span className="text-ink">
         {rows.map((r, i) => (
           <span key={r.id}>
             {i > 0 ? ', ' : ''}
             <span className={style.text}>{r.name}</span>
             {continuousIds.has(r.id) && (
-              <span className="text-zinc-400"> (continuous)</span>
+              <span className="text-ink/40"> (continuous)</span>
             )}
           </span>
         ))}
@@ -409,7 +407,6 @@ function MonthGroupLine({
     </div>
   )
 }
-
 
 function DayCell({
   cell,
@@ -423,7 +420,7 @@ function DayCell({
   onSelect: () => void
 }) {
   if (!cell) {
-    return <div className="h-[96px] border-l border-t border-zinc-100 bg-zinc-50/40 first:border-l-0" />
+    return <div className="h-[96px] border-l border-t border-midnight/10 bg-jordy/[0.04] first:border-l-0" />
   }
 
   const continuous = buckets?.continuous ?? []
@@ -436,16 +433,16 @@ function DayCell({
       type="button"
       onClick={onSelect}
       disabled={!isClickable}
-      className={`group relative flex h-[96px] flex-col border-l border-t border-zinc-100 text-left transition first:border-l-0 ${
-        isSelected ? 'ring-2 ring-zinc-900 ring-inset' : ''
-      } ${isClickable ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'}`}
+      className={`group relative flex h-[96px] flex-col border-l border-t border-midnight/10 text-left transition first:border-l-0 ${
+        isSelected ? 'ring-2 ring-midnight ring-inset' : ''
+      } ${isClickable ? 'cursor-pointer hover:bg-jordy/10' : 'cursor-default'}`}
     >
-      <span className="px-1 pt-0.5 text-[10px] font-medium text-zinc-500 sm:text-[11px]">
+      <span className="px-1 pt-0.5 text-[10px] font-medium text-ink/60 sm:text-[11px]">
         {cell.day}
       </span>
       <ContinuousZone tags={continuous} />
       <SlotZone label="AM" tags={am} />
-      <div className="h-px bg-zinc-100" />
+      <div className="h-px bg-midnight/10" />
       <SlotZone label="PM" tags={pm} />
     </button>
   )
@@ -480,9 +477,9 @@ function SlotZone({ label, tags }: { label: 'AM' | 'PM'; tags: Tag[] }) {
       }`}
     >
       <span
-        className={`pointer-events-none absolute left-0.5 top-0 text-[8px] font-medium uppercase tracking-wider ${
-          isEmpty ? 'text-zinc-300' : 'text-white/80 mix-blend-luminosity'
-        } sm:text-[9px]`}
+        className={`pointer-events-none absolute left-0.5 top-0 text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
+          isEmpty ? 'text-ink/30' : 'text-midnight/40'
+        }`}
       >
         {label}
       </span>
@@ -505,7 +502,7 @@ function ChipSolo({ tag }: { tag: Tag }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm border ${s.solid} ${s.border} px-1 text-[9px] font-semibold leading-tight text-white sm:text-[10px]`}
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm border px-1 text-[9px] font-semibold leading-tight sm:text-[10px] ${s.solid} ${s.border} ${s.chipText}`}
     >
       {tag.code}
     </span>
@@ -516,7 +513,7 @@ function ChipSplit({ tag, count }: { tag: Tag; count: number }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden border-r border-white/60 last:border-r-0 ${s.solid} text-[8px] font-bold leading-none text-white ${count >= 3 ? 'min-w-0' : ''}`}
+      className={`flex flex-1 items-center justify-center overflow-hidden border-r border-white/60 last:border-r-0 text-[8px] font-bold leading-none ${s.solid} ${s.chipText} ${count >= 3 ? 'min-w-0' : ''}`}
     >
       <span className="truncate px-0.5">{count > 3 ? '•' : tag.code}</span>
     </span>
@@ -533,13 +530,13 @@ function SelectedDayDetail({
   onClose: () => void
 }) {
   return (
-    <div className="rounded-lg border border-zinc-300 bg-white p-3 shadow-sm">
+    <div className="rounded-xl border border-midnight/20 bg-white p-3 shadow-sm">
       <header className="mb-2 flex items-baseline justify-between">
-        <h4 className="text-sm font-semibold text-zinc-900">{formatLongDate(iso)}</h4>
+        <h4 className="font-serif text-base italic text-midnight">{formatLongDate(iso)}</h4>
         <button
           type="button"
           onClick={onClose}
-          className="text-[11px] text-zinc-500 underline hover:text-zinc-800"
+          className="text-[11px] text-ink/60 underline decoration-midnight/30 underline-offset-2 hover:text-midnight"
         >
           close
         </button>
@@ -558,11 +555,11 @@ function SelectedDayDetail({
 function SlotDetailRow({ label, tags }: { label: string; tags: Tag[] }) {
   return (
     <div className="flex flex-col gap-1 text-xs">
-      <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-ink/60">
         {label}
       </span>
       {tags.length === 0 ? (
-        <span className="text-zinc-400">— free —</span>
+        <span className="text-ink/40">— free —</span>
       ) : (
         <ul className="flex flex-col gap-1">
           {tags.map((t, i) => {
@@ -626,34 +623,34 @@ function CreditsCounter({
   const deltaSign = delta > 0 ? '+' : delta < 0 ? '−' : ''
   const deltaColor =
     delta > 0
-      ? 'text-emerald-700'
+      ? 'text-midnight'
       : delta < 0
-        ? 'text-rose-700'
-        : 'text-zinc-500'
+        ? 'text-robroy-deep'
+        : 'text-ink/60'
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+    <section className="rounded-xl border border-midnight/15 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <div className="flex flex-col">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
               Now
             </span>
-            <span className="text-xl font-semibold text-zinc-900 sm:text-2xl">
+            <span className="font-serif text-2xl italic text-midnight sm:text-3xl">
               {fmtEcts(now)}{' '}
-              <span className="text-xs font-medium text-zinc-500">ECTS</span>
+              <span className="font-sans text-xs font-medium not-italic text-ink/60">ECTS</span>
             </span>
           </div>
           {hasChanges && (
             <>
-              <span className="text-zinc-300">→</span>
+              <span className="text-midnight/30">→</span>
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
                   After changes
                 </span>
-                <span className="text-xl font-semibold text-zinc-900 sm:text-2xl">
+                <span className="font-serif text-2xl italic text-midnight sm:text-3xl">
                   {fmtEcts(after)}{' '}
-                  <span className="text-xs font-medium text-zinc-500">ECTS</span>
+                  <span className="font-sans text-xs font-medium not-italic text-ink/60">ECTS</span>
                 </span>
               </div>
             </>
@@ -666,15 +663,15 @@ function CreditsCounter({
               {deltaSign}
               {fmtEcts(Math.abs(delta))} ECTS net
             </span>
-            <span className="text-zinc-500">
+            <span className="text-ink/60">
               {droppingEcts > 0 && (
-                <span className="text-rose-700">
+                <span className="text-robroy-deep">
                   −{fmtEcts(droppingEcts)} dropping
                 </span>
               )}
               {droppingEcts > 0 && addingEcts > 0 && <span> · </span>}
               {addingEcts > 0 && (
-                <span className="text-emerald-700">
+                <span className="text-midnight">
                   +{fmtEcts(addingEcts)} adding
                 </span>
               )}

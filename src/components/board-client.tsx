@@ -37,6 +37,9 @@ interface Props {
 
 type ScopeFilter = 'all' | 'mine'
 
+const fieldClass =
+  'w-full rounded-xl border border-midnight/20 bg-white px-3 py-2 text-sm text-midnight outline-none transition focus:border-midnight focus:ring-2 focus:ring-midnight/15 placeholder:text-ink/40'
+
 export function BoardClient({
   currentUserId,
   courses,
@@ -56,15 +59,12 @@ export function BoardClient({
     return s
   }, [listings])
 
-  // Total interest per course = drops + adds. Drives the default sort and
-  // the count badges shown on each collapsed card.
   const interestByCourse = useMemo(() => {
     const m = new Map<string, number>()
     for (const l of listings) m.set(l.course_id, (m.get(l.course_id) ?? 0) + 1)
     return m
   }, [listings])
 
-  // Auto-expand the single course the user explicitly filtered to.
   function pickCourseFilter(id: string) {
     setCourseFilter(id)
     if (id !== 'all') {
@@ -103,7 +103,6 @@ export function BoardClient({
           (c.professor ?? '').toLowerCase().includes(term)
         )
       })
-    // Sort by total interest desc, ties alphabetical.
     out.sort((a, b) => {
       const ia = interestByCourse.get(a.id) ?? 0
       const ib = interestByCourse.get(b.id) ?? 0
@@ -142,11 +141,14 @@ export function BoardClient({
 
   if (listings.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-700">
-        <p className="font-medium text-zinc-900">Nobody&apos;s posted yet.</p>
-        <p className="mt-1">
+      <div className="rounded-2xl border border-midnight/15 bg-jordy/10 p-6 text-center text-sm text-ink">
+        <p className="font-serif text-xl italic text-midnight">Nobody&rsquo;s posted yet.</p>
+        <p className="mt-1.5">
           Be the first.{' '}
-          <Link href="/profile" className="underline">
+          <Link
+            href="/profile"
+            className="text-midnight underline decoration-midnight/40 underline-offset-2 hover:decoration-midnight"
+          >
             Post the courses you want to drop or add →
           </Link>
         </p>
@@ -157,9 +159,9 @@ export function BoardClient({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-zinc-500">
-          <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
-          <span className="font-medium text-emerald-700">{totalAdds}</span> adds
+        <p className="text-xs text-ink/70">
+          <span className="font-semibold text-robroy-deep">{totalDrops}</span> drops ·{' '}
+          <span className="font-semibold text-midnight">{totalAdds}</span> adds
         </p>
         <RefreshButton />
       </div>
@@ -168,7 +170,7 @@ export function BoardClient({
         <select
           value={courseFilter}
           onChange={(e) => pickCourseFilter(e.target.value)}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:w-auto"
+          className={`${fieldClass} sm:w-auto`}
         >
           <option value="all">All courses</option>
           {(['summer', 'september', 'term4'] as Term[]).map((term) =>
@@ -188,14 +190,14 @@ export function BoardClient({
           placeholder="Search name or professor…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 sm:flex-1"
+          className={`${fieldClass} sm:flex-1`}
         />
       </div>
 
       <ScopeTabs scope={scope} setScope={setScope} myCount={myCourseSet.size} />
 
       {filteredCourses.length === 0 ? (
-        <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
+        <p className="rounded-xl border border-midnight/15 bg-jordy/10 px-3 py-4 text-center text-sm text-ink/70">
           No matches.
         </p>
       ) : (
@@ -205,7 +207,7 @@ export function BoardClient({
             if (inTerm.length === 0) return null
             return (
               <section key={term} className="flex flex-col gap-3">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                <h2 className="text-[11px] font-medium uppercase tracking-wider text-ink/60">
                   {TERM_LABELS[term]}
                 </h2>
                 <div className="flex flex-col gap-3">
@@ -230,9 +232,12 @@ export function BoardClient({
         </div>
       )}
 
-      <p className="mt-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-center text-xs text-zinc-600">
-        Don&apos;t see your course?{' '}
-        <Link href="/profile" className="font-medium underline">
+      <p className="mt-2 rounded-xl border border-midnight/15 bg-white px-3 py-3 text-center text-xs text-ink/70">
+        Don&rsquo;t see your course?{' '}
+        <Link
+          href="/profile"
+          className="font-medium text-midnight underline decoration-midnight/40 underline-offset-2 hover:decoration-midnight"
+        >
           Edit your profile
         </Link>{' '}
         to post your drop or add.
@@ -256,31 +261,30 @@ function CourseCard({
   isExpanded: boolean
   onToggle: () => void
 }) {
-  const total = drop.length + add.length
   return (
-    <article className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+    <article className="overflow-hidden rounded-xl border border-midnight/15 bg-white">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
-        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-zinc-50"
+        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-jordy/5"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="truncate text-base font-semibold text-zinc-900">
+          <h3 className="truncate font-serif text-lg italic text-midnight">
             {course.name}
           </h3>
-          <p className="truncate text-xs text-zinc-500">
+          <p className="truncate text-xs text-ink/60">
             {course.class_code ? `${course.class_code} · ` : ''}
             {course.ects} ECTS · {course.schedule_text ?? '—'}
             {course.professor ? ` · ${course.professor}` : ''}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 text-xs font-medium">
-          <PoolBadge tone="red" count={drop.length} label="drop" />
-          <PoolBadge tone="emerald" count={add.length} label="add" />
+          <PoolBadge tone="drop" count={drop.length} label="drop" />
+          <PoolBadge tone="add" count={add.length} label="add" />
           <span
             aria-hidden
-            className={`ml-1 inline-block text-zinc-400 transition-transform ${
+            className={`ml-1 inline-block text-ink/40 transition-transform ${
               isExpanded ? 'rotate-180' : ''
             }`}
           >
@@ -290,23 +294,21 @@ function CourseCard({
       </button>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 gap-3 border-t border-zinc-100 p-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 border-t border-midnight/10 p-4 sm:grid-cols-2">
           <ListingColumn
             label="Has & wants to drop"
-            tone="red"
+            tone="drop"
             listings={drop}
             currentUserId={currentUserId}
           />
           <ListingColumn
             label="Wants to add"
-            tone="emerald"
+            tone="add"
             listings={add}
             currentUserId={currentUserId}
           />
         </div>
       )}
-
-      {total === 0 && !isExpanded && null}
     </article>
   )
 }
@@ -316,16 +318,16 @@ function PoolBadge({
   count,
   label,
 }: {
-  tone: 'red' | 'emerald'
+  tone: 'drop' | 'add'
   count: number
   label: string
 }) {
   const active = count > 0
   const cls = active
-    ? tone === 'red'
-      ? 'border-red-200 bg-red-50 text-red-700'
-      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    : 'border-zinc-200 bg-zinc-50 text-zinc-400'
+    ? tone === 'drop'
+      ? 'border-robroy-deep/40 bg-robroy/30 text-midnight'
+      : 'border-midnight bg-midnight text-white'
+    : 'border-midnight/15 bg-white text-ink/40'
   return (
     <span
       className={`inline-flex min-w-[2.25rem] items-center justify-center gap-1 rounded-full border px-2 py-0.5 ${cls}`}
@@ -343,24 +345,24 @@ function ListingColumn({
   currentUserId,
 }: {
   label: string
-  tone: 'red' | 'emerald'
+  tone: 'drop' | 'add'
   listings: BoardListing[]
   currentUserId: string
 }) {
   const labelClass =
-    tone === 'red'
-      ? 'text-red-700 bg-red-50 border-red-100'
-      : 'text-emerald-700 bg-emerald-50 border-emerald-100'
+    tone === 'drop'
+      ? 'text-midnight bg-robroy/30 border-robroy-deep/40'
+      : 'text-white bg-midnight border-midnight'
 
   return (
     <div className="flex flex-col gap-2">
       <span
-        className={`inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${labelClass}`}
+        className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${labelClass}`}
       >
         {label} ({listings.length})
       </span>
       {listings.length === 0 ? (
-        <p className="text-xs text-zinc-400">—</p>
+        <p className="text-xs text-ink/40">—</p>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {listings.map((l) => (
@@ -401,11 +403,11 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
   }
 
   return (
-    <li className="flex flex-col gap-1 rounded-md bg-zinc-50 px-2 py-1.5 text-sm">
+    <li className="flex flex-col gap-1 rounded-lg bg-jordy/10 px-2 py-1.5 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="flex flex-col leading-tight">
-          <span className="font-medium text-zinc-900">{name}</span>
-          {isMe && <span className="text-[11px] text-zinc-500">you</span>}
+          <span className="font-medium text-midnight">{name}</span>
+          {isMe && <span className="text-[11px] italic text-ink/60">you</span>}
         </span>
         {isMe ? (
           <div className="flex shrink-0 items-center gap-1">
@@ -413,7 +415,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+              className="rounded-md border border-midnight/20 bg-white px-2 py-1 text-xs font-medium text-midnight transition hover:bg-jordy/15 disabled:opacity-50"
               title="Mark this listing as done; it stops showing on the board."
             >
               Done
@@ -423,7 +425,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
               onClick={onDelete}
               disabled={isPending}
               aria-label="Delete listing"
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+              className="rounded-md border border-midnight/20 bg-white px-2 py-1 text-xs font-medium text-midnight transition hover:border-robroy-deep hover:bg-robroy/20 hover:text-robroy-deep disabled:opacity-50"
             >
               ✕
             </button>
@@ -433,7 +435,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
             href={contactHref}
             target="_blank"
             rel="noreferrer"
-            className="rounded-md border border-zinc-900 bg-zinc-900 px-2 py-1 text-xs font-medium text-white"
+            className="rounded-full border border-midnight bg-midnight px-3 py-1 text-xs font-medium text-white transition hover:bg-[#001d52]"
           >
             {contactLabel}
           </a>
@@ -441,13 +443,13 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
           <button
             type="button"
             onClick={() => setRevealed(true)}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+            className="rounded-full border border-midnight/20 bg-white px-3 py-1 text-xs font-medium text-midnight transition hover:bg-jordy/15"
           >
             Show contact
           </button>
         )}
       </div>
-      {error && <span className="text-[11px] text-red-600">{error}</span>}
+      {error && <span className="text-[11px] text-robroy-deep">{error}</span>}
     </li>
   )
 }
@@ -466,7 +468,7 @@ function ScopeTabs({
     { id: 'mine', label: 'My courses', subtitle: myCount > 0 ? `${myCount}` : undefined },
   ]
   return (
-    <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-0.5 self-start">
+    <div className="flex items-center gap-1 self-start rounded-full border border-midnight/15 bg-white p-0.5">
       {options.map((o) => {
         const isActive = scope === o.id
         return (
@@ -476,15 +478,15 @@ function ScopeTabs({
             onClick={() => setScope(o.id)}
             className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition ${
               isActive
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-midnight text-white shadow-sm'
+                : 'text-ink hover:text-midnight'
             }`}
           >
             <span>{o.label}</span>
             {o.subtitle && (
               <span
                 className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'
+                  isActive ? 'bg-white/20 text-white' : 'bg-jordy/30 text-midnight'
                 }`}
               >
                 {o.subtitle}
@@ -528,7 +530,7 @@ function RefreshButton() {
       onClick={onClick}
       disabled={isRefreshing}
       title="Refresh the board to pull in new listings"
-      className="inline-flex items-center gap-1 text-xs text-zinc-500 transition hover:text-zinc-900 disabled:opacity-60"
+      className="inline-flex items-center gap-1 text-xs text-ink/60 transition hover:text-midnight disabled:opacity-60"
     >
       <span
         aria-hidden

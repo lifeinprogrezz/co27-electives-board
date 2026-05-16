@@ -11,6 +11,12 @@ import {
 const initialSend: SignInState = undefined
 const initialVerify: VerifyOtpState = undefined
 
+const inputBase =
+  'w-full rounded-xl border border-midnight/20 bg-white px-3 py-2.5 text-base text-midnight outline-none transition focus:border-midnight focus:ring-2 focus:ring-midnight/15 placeholder:text-ink/40'
+
+const primaryPill =
+  'inline-flex w-full items-center justify-center rounded-full bg-midnight px-5 py-3 font-serif text-lg italic text-white shadow-sm transition hover:bg-[#001d52] disabled:cursor-not-allowed disabled:opacity-60'
+
 export function LoginForm() {
   const [sendState, sendAction, sending] = useActionState(
     signInWithMagicLink,
@@ -23,7 +29,7 @@ export function LoginForm() {
 
   return (
     <form action={sendAction} className="flex flex-col gap-3">
-      <label htmlFor="email" className="text-sm font-medium text-zinc-700">
+      <label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-ink/70">
         ESADE email
       </label>
       <input
@@ -34,19 +40,15 @@ export function LoginForm() {
         autoComplete="email"
         placeholder="name@alumni.esade.edu"
         defaultValue={sendState?.ok === false ? sendState.lastEmail ?? '' : ''}
-        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+        className={inputBase}
       />
       {sendState?.ok === false && (
-        <p className="text-sm text-red-600">{sendState.error}</p>
+        <p className="text-sm text-robroy-deep">{sendState.error}</p>
       )}
-      <button
-        type="submit"
-        disabled={sending}
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {sending ? 'Sending…' : 'Email me a magic link'}
+      <button type="submit" disabled={sending} className={primaryPill}>
+        {sending ? 'sending…' : 'email me a code →'}
       </button>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs leading-relaxed text-ink/60">
         Only ESADE emails (<span className="font-mono">@alumni.esade.edu</span> or{' '}
         <span className="font-mono">@esade.edu</span>) can sign in.
       </p>
@@ -62,17 +64,22 @@ function OtpStep({ email }: { email: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-        <p className="font-medium">Check your inbox.</p>
-        <p className="mt-1">
-          We sent a 6-digit sign-in code to <span className="font-mono">{email}</span>.
-          The email contains <em>only</em> the code — no link to click. Paste it below.
+      <div className="rounded-xl border border-midnight/20 bg-jordy/15 p-4 text-sm text-midnight">
+        <p className="font-serif text-lg italic">Check your inbox.</p>
+        <p className="mt-1 text-ink">
+          We sent a 6-digit sign-in code to{' '}
+          <span className="font-mono text-midnight">{email}</span>. The email
+          contains <em className="italic">only</em> the code &mdash; no link to click.
+          Paste it below.
         </p>
       </div>
 
       <form action={verifyAction} className="flex flex-col gap-3">
         <input type="hidden" name="email" value={email} />
-        <label htmlFor="token" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="token"
+          className="text-xs font-medium uppercase tracking-wider text-ink/70"
+        >
           6-digit code from the email
         </label>
         <input
@@ -85,21 +92,23 @@ function OtpStep({ email }: { email: string }) {
           maxLength={6}
           pattern="[0-9]{6}"
           placeholder="123456"
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-center font-mono text-lg tracking-[0.4em] outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+          className={`${inputBase} text-center font-mono text-2xl tracking-[0.4em]`}
         />
         {verifyState?.ok === false && (
-          <p className="text-sm text-red-600">{verifyState.error}</p>
+          <p className="text-sm text-robroy-deep">{verifyState.error}</p>
         )}
-        <button
-          type="submit"
-          disabled={verifying}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {verifying ? 'Verifying…' : 'Sign in'}
+        <button type="submit" disabled={verifying} className={primaryPill}>
+          {verifying ? 'verifying…' : 'sign in →'}
         </button>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs leading-relaxed text-ink/60">
           Code expires in an hour. Didn&apos;t arrive? Check spam, then{' '}
-          <a href="/login" className="underline">try again</a>.
+          <a
+            href="/login"
+            className="underline decoration-midnight/30 underline-offset-2 hover:text-midnight"
+          >
+            try again
+          </a>
+          .
         </p>
       </form>
     </div>

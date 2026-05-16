@@ -32,22 +32,21 @@ export default async function BoardPage() {
   ])
 
   const courses = (coursesResult.data ?? []) as BoardCourse[]
-  // Supabase typing of the embedded relation is loose — coerce to our shape.
   const listings = ((listingsResult.data ?? []) as unknown) as BoardListing[]
 
-  // Build "my courses" set for the quick filter:
-  // assigned ∪ my own drop listings ∪ my own add listings.
   const myCourseIds = new Set<string>(profile.assigned_course_ids ?? [])
   for (const l of listings) {
     if (l.user.id === profile.id) myCourseIds.add(l.course_id)
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">The Board</h1>
-        <p className="text-sm text-zinc-600">
-          Drops in red, adds in green. Tap a name to show contact.
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="font-serif text-[36px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[44px]">
+          the <em className="not-italic font-serif italic text-robroy-deep">board</em>.
+        </h1>
+        <p className="text-sm leading-relaxed text-ink">
+          Drops in gold, adds in midnight. Tap a name to reveal contact.
         </p>
       </div>
 

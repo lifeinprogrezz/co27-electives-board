@@ -63,7 +63,7 @@ export default async function CalendarPage() {
     .filter(
       (c) => assignedSet.has(c.id) || dropSet.has(c.id) || addSet.has(c.id),
     )
-    .filter((c) => c.start_date && c.end_date) // skip courses without parsed dates
+    .filter((c) => c.start_date && c.end_date)
     .map((c) => {
       let status: CalendarStatus
       if (dropSet.has(c.id)) status = 'dropping'
@@ -84,13 +84,13 @@ export default async function CalendarPage() {
     })
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-          Your calendar
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="font-serif text-[36px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[44px]">
+          your <em className="not-italic font-serif italic text-robroy-deep">calendar</em>.
         </h1>
-        <p className="text-sm text-zinc-600">
-          Jun – Dec 2026. Pending drops in rose, adds in emerald, kept in sky.
+        <p className="text-sm leading-relaxed text-ink">
+          Jun &ndash; Dec 2026. Drops in gold, adds in midnight, kept in sky.
         </p>
       </div>
 

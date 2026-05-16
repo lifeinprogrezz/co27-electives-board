@@ -28,7 +28,6 @@ export function AppHeader({ name, email }: Props) {
   const initial = initialFor(name, email)
   const displayName = name?.trim() || email.split('@')[0]
 
-  // Close the menu on outside click / Esc.
   useEffect(() => {
     if (!menuOpen) return
     function onDown(e: MouseEvent) {
@@ -48,16 +47,16 @@ export function AppHeader({ name, email }: Props) {
   }, [menuOpen])
 
   return (
-    <header className="sticky top-0 z-20 -mx-4 mb-5 border-b border-zinc-200 bg-white/95 backdrop-blur sm:-mx-6">
+    <header className="sticky top-0 z-20 -mx-4 mb-5 border-b border-midnight/10 bg-white/95 backdrop-blur sm:-mx-6">
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6">
         <Link
           href="/board"
-          className="text-sm font-semibold tracking-tight text-zinc-900 sm:text-base"
+          className="font-serif text-[18px] italic leading-none text-midnight sm:text-[20px]"
         >
-          Co27 Board
+          co27.exchange
         </Link>
 
-        <nav className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-zinc-50 p-0.5">
+        <nav className="flex items-center gap-0.5 rounded-full border border-midnight/15 bg-white p-0.5">
           {TABS.map((t) => {
             const isActive = pathname === t.href || pathname.startsWith(`${t.href}/`)
             return (
@@ -67,8 +66,8 @@ export function AppHeader({ name, email }: Props) {
                 aria-current={isActive ? 'page' : undefined}
                 className={`rounded-full px-3 py-1 text-xs font-medium transition sm:text-sm ${
                   isActive
-                    ? 'bg-zinc-900 text-white shadow-sm'
-                    : 'text-zinc-600 hover:text-zinc-900'
+                    ? 'bg-midnight text-white shadow-sm'
+                    : 'text-ink hover:text-midnight'
                 }`}
               >
                 {t.label}
@@ -83,23 +82,23 @@ export function AppHeader({ name, email }: Props) {
             onClick={() => setMenuOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-700 sm:text-sm"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-midnight font-serif text-xs italic text-white shadow-sm transition hover:bg-[#001d52] sm:text-sm"
           >
             {initial}
           </button>
           {menuOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full mt-1.5 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white text-sm shadow-lg"
+              className="absolute right-0 top-full mt-1.5 w-56 overflow-hidden rounded-xl border border-midnight/15 bg-white text-sm shadow-lg"
             >
               <div className="px-3 py-2">
-                <p className="truncate font-medium text-zinc-900">{displayName}</p>
-                <p className="truncate text-[11px] text-zinc-500">{email}</p>
+                <p className="truncate font-medium text-midnight">{displayName}</p>
+                <p className="truncate text-[11px] text-ink/60">{email}</p>
               </div>
-              <form action={signOut} role="menuitem" className="border-t border-zinc-100">
+              <form action={signOut} role="menuitem" className="border-t border-midnight/10">
                 <button
                   type="submit"
-                  className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                  className="block w-full px-3 py-2 text-left text-robroy-deep hover:bg-robroy/15"
                 >
                   Sign out
                 </button>

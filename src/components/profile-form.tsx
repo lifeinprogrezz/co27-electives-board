@@ -42,6 +42,18 @@ interface Props {
 
 const initialState: SaveProfileState = undefined
 
+const fieldClass =
+  'w-full rounded-xl border border-midnight/20 bg-white px-3 py-2.5 text-base text-midnight outline-none transition focus:border-midnight focus:ring-2 focus:ring-midnight/15 placeholder:text-ink/40'
+
+const sectionCard =
+  'flex flex-col gap-4 rounded-xl border border-midnight/15 bg-white p-4'
+
+const primaryPill =
+  'rounded-full bg-midnight px-5 py-2.5 font-serif text-base italic text-white shadow-sm transition hover:bg-[#001d52] disabled:cursor-not-allowed disabled:opacity-60'
+
+const secondaryPill =
+  'rounded-full border border-midnight/25 bg-white px-4 py-2 text-sm font-medium text-midnight transition hover:bg-jordy/15 disabled:cursor-not-allowed disabled:opacity-40'
+
 function normalizeWhatsappPreview(input: string): string {
   const digits = input.replace(/\D+/g, '')
   return digits
@@ -68,8 +80,6 @@ export function ProfileForm({
   const [drops, setDrops] = useState<Set<string>>(() => new Set(initialDropIds))
   const [adds, setAdds] = useState<Set<string>>(() => new Set(initialAddIds))
 
-  // Restore a saved draft (only for new users — returning users always see
-  // server-side truth so they can edit their saved profile).
   const restoredRef = useRef(false)
   useEffect(() => {
     if (restoredRef.current) return
@@ -93,7 +103,6 @@ export function ProfileForm({
     }
   }, [isReturning])
 
-  // Persist every change.
   useEffect(() => {
     if (!restoredRef.current) return
     try {
@@ -177,7 +186,6 @@ export function ProfileForm({
     })
   }
 
-  // Step 1 validation: name required (whatsapp optional, but if present must look sane).
   const step1Valid = name.trim().length >= 1 && name.trim().length <= 80
   const whatsappDigits = normalizeWhatsappPreview(whatsapp)
   const whatsappWarning =
@@ -199,8 +207,6 @@ export function ProfileForm({
 
   const formRef = useRef<HTMLFormElement | null>(null)
 
-  // The form has no `action` prop. The ONLY thing that triggers a save is
-  // an explicit click on the Save button below, which invokes this handler.
   function onSaveClick() {
     if (!formRef.current) return
     const formData = new FormData(formRef.current)
@@ -209,10 +215,19 @@ export function ProfileForm({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-          {isReturning ? 'Edit your profile' : 'Welcome — let’s set you up'}
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-3">
+        <h1 className="font-serif text-[34px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[42px]">
+          {isReturning ? (
+            <>
+              edit your <em className="not-italic font-serif italic text-robroy-deep">profile</em>.
+            </>
+          ) : (
+            <>
+              welcome &mdash; let&rsquo;s{' '}
+              <em className="not-italic font-serif italic text-robroy-deep">set you up</em>.
+            </>
+          )}
         </h1>
         <Stepper current={step} onSelect={(s) => isReturning && setStep(s)} canJump={isReturning} />
       </header>
@@ -222,7 +237,6 @@ export function ProfileForm({
         onSubmit={(e) => e.preventDefault()}
         className="flex flex-col gap-5"
       >
-        {/* Hidden fields keep ALL state in the form on submit. */}
         <input type="hidden" name="name" value={name} />
         <input type="hidden" name="whatsapp" value={whatsapp} />
         {assignedIdsArr.map((id) => (
@@ -270,7 +284,7 @@ export function ProfileForm({
         )}
 
         {state?.ok === false && (
-          <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-xl border border-robroy-deep/50 bg-robroy/25 px-3 py-2 text-sm text-midnight">
             {state.error}
           </p>
         )}
@@ -304,19 +318,19 @@ function Stepper({
         const baseClasses =
           'flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition'
         const stateClasses = isActive
-          ? 'border-zinc-900 bg-zinc-900 text-white'
+          ? 'border-midnight bg-midnight text-white'
           : isDone
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-            : 'border-zinc-200 bg-white text-zinc-500'
+            ? 'border-jordy/50 bg-jordy/20 text-midnight'
+            : 'border-midnight/15 bg-white text-ink/60'
         const content = (
           <span className={`${baseClasses} ${stateClasses}`}>
             <span
               className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
                 isActive
-                  ? 'bg-white text-zinc-900'
+                  ? 'bg-white text-midnight'
                   : isDone
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-zinc-200 text-zinc-600'
+                    ? 'bg-midnight text-white'
+                    : 'bg-jordy/20 text-midnight'
               }`}
             >
               {isDone ? '✓' : s.id}
@@ -356,12 +370,12 @@ function StepFooter({
 }) {
   const isLast = step === 4
   return (
-    <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+    <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-between gap-3 border-t border-midnight/10 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
       <button
         type="button"
         onClick={() => setStep(Math.max(1, step - 1) as Step)}
         disabled={step === 1}
-        className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+        className={secondaryPill}
       >
         ← Back
       </button>
@@ -370,20 +384,29 @@ function StepFooter({
           type="button"
           onClick={onSave}
           disabled={pending}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className={primaryPill}
         >
-          {pending ? 'Saving…' : 'Save and view the board'}
+          {pending ? 'saving…' : 'save and view the board →'}
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setStep(Math.min(4, step + 1) as Step)}
           disabled={!canContinue}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className={primaryPill}
         >
-          Continue →
+          continue →
         </button>
       )}
+    </div>
+  )
+}
+
+function SectionHeader({ title, subtitle }: { title: React.ReactNode; subtitle: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h2 className="font-serif text-xl italic text-midnight">{title}</h2>
+      <p className="text-xs text-ink/60">{subtitle}</p>
     </div>
   )
 }
@@ -402,43 +425,40 @@ function Step1({
   warning: string | null
 }) {
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-zinc-900">About you</h2>
-        <p className="text-xs text-zinc-500">
-          How classmates will see and reach you on the board.
-        </p>
-      </div>
+    <section className={sectionCard}>
+      <SectionHeader
+        title="About you"
+        subtitle="How classmates will see and reach you on the board."
+      />
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-zinc-700">Name</span>
+        <span className="text-xs font-medium uppercase tracking-wider text-ink/70">Name</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
           maxLength={80}
           autoFocus
-          className="rounded-md border border-zinc-300 px-3 py-2 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+          className={fieldClass}
         />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-zinc-700">
-          WhatsApp number{' '}
-          <span className="text-zinc-400">(optional)</span>
+        <span className="text-xs font-medium uppercase tracking-wider text-ink/70">
+          WhatsApp number <span className="text-ink/40">(optional)</span>
         </span>
         <input
           value={whatsapp}
           onChange={(e) => setWhatsapp(e.target.value)}
           inputMode="tel"
           placeholder="+34 666 123 456"
-          className="rounded-md border border-zinc-300 px-3 py-2 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+          className={fieldClass}
         />
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-ink/60">
           If you skip this, classmates can reach you by email.
         </span>
         {warning && (
-          <span className="text-xs text-amber-700">{warning}</span>
+          <span className="text-xs text-robroy-deep">{warning}</span>
         )}
       </label>
     </section>
@@ -457,25 +477,23 @@ function Step2({
   count: number
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-zinc-900">Your assigned electives</h2>
-        <p className="text-xs text-zinc-500">
-          Pick the courses you were allocated in the initial bid.
-        </p>
-      </div>
+    <section className={sectionCard}>
+      <SectionHeader
+        title="Your assigned electives"
+        subtitle="Pick the courses you were allocated in the initial bid."
+      />
 
-      <div className="text-xs text-zinc-600">
-        <span className="font-medium">{count}</span> selected
+      <div className="text-xs text-ink">
+        <span className="font-semibold text-midnight">{count}</span> selected
       </div>
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         grouped[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
-            <h3 className="mt-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">
               {TERM_LABELS[term]}
             </h3>
-            <ul className="flex flex-col divide-y divide-zinc-100">
+            <ul className="flex flex-col divide-y divide-midnight/10">
               {grouped[term].map((c) => (
                 <PillRow
                   key={c.id}
@@ -483,7 +501,7 @@ function Step2({
                   active={assigned.has(c.id)}
                   activeLabel="Assigned"
                   inactiveLabel="Assign"
-                  activeClass="border-zinc-900 bg-zinc-900 text-white"
+                  activeClass="border-midnight bg-midnight text-white"
                   onToggle={() => toggle(c.id)}
                 />
               ))}
@@ -507,28 +525,28 @@ function Step3({
   count: number
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-zinc-900">
-          Which of those do you want to <span className="text-red-700">drop</span>?
-        </h2>
-        <p className="text-xs text-zinc-500">
-          Mark the ones you&apos;d give up. Classmates can reach out to swap.
-          Skip this step if you&apos;re not dropping anything.
-        </p>
-      </div>
+    <section className={sectionCard}>
+      <SectionHeader
+        title={
+          <>
+            Which of those do you want to{' '}
+            <em className="not-italic font-serif italic text-robroy-deep">drop</em>?
+          </>
+        }
+        subtitle="Mark the ones you'd give up. Classmates can reach out to swap. Skip if you're not dropping anything."
+      />
 
       {assignedCourses.length === 0 ? (
-        <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-500">
+        <p className="rounded-xl border border-midnight/15 bg-jordy/10 px-3 py-3 text-sm text-ink/70">
           You haven&apos;t marked any assigned electives yet (step 2). Go back to
           pick them first.
         </p>
       ) : (
         <>
-          <div className="text-xs text-zinc-600">
-            <span className="font-medium">{count}</span> to drop
+          <div className="text-xs text-ink">
+            <span className="font-semibold text-robroy-deep">{count}</span> to drop
           </div>
-          <ul className="flex flex-col divide-y divide-zinc-100">
+          <ul className="flex flex-col divide-y divide-midnight/10">
             {assignedCourses.map((c) => (
               <PillRow
                 key={c.id}
@@ -536,7 +554,7 @@ function Step3({
                 active={drops.has(c.id)}
                 activeLabel="Dropping"
                 inactiveLabel="Keep"
-                activeClass="border-red-600 bg-red-600 text-white"
+                activeClass="border-robroy-deep bg-robroy text-midnight"
                 onToggle={() => toggle(c.id)}
               />
             ))}
@@ -559,29 +577,28 @@ function Step4({
   count: number
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-zinc-900">
-          Which courses would you like to{' '}
-          <span className="text-emerald-700">add</span>?
-        </h2>
-        <p className="text-xs text-zinc-500">
-          From courses you weren&apos;t assigned. Optional — you don&apos;t need to
-          pick any.
-        </p>
-      </div>
+    <section className={sectionCard}>
+      <SectionHeader
+        title={
+          <>
+            Which courses would you like to{' '}
+            <em className="not-italic font-serif italic text-robroy-deep">add</em>?
+          </>
+        }
+        subtitle="From courses you weren't assigned. Optional — you don't need to pick any."
+      />
 
-      <div className="text-xs text-zinc-600">
-        <span className="font-medium">{count}</span> to add
+      <div className="text-xs text-ink">
+        <span className="font-semibold text-midnight">{count}</span> to add
       </div>
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         unassignedByTerm[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
-            <h3 className="mt-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">
               {TERM_LABELS[term]}
             </h3>
-            <ul className="flex flex-col divide-y divide-zinc-100">
+            <ul className="flex flex-col divide-y divide-midnight/10">
               {unassignedByTerm[term].map((c) => (
                 <PillRow
                   key={c.id}
@@ -589,7 +606,7 @@ function Step4({
                   active={adds.has(c.id)}
                   activeLabel="Adding"
                   inactiveLabel="Add"
-                  activeClass="border-emerald-600 bg-emerald-600 text-white"
+                  activeClass="border-midnight bg-midnight text-white"
                   onToggle={() => toggle(c.id)}
                 />
               ))}
@@ -619,8 +636,8 @@ function PillRow({
   return (
     <li className="flex items-center justify-between gap-2 py-2">
       <div className="flex flex-col gap-0.5 text-sm">
-        <span className="font-medium text-zinc-900">{course.name}</span>
-        <span className="text-xs text-zinc-500">
+        <span className="font-medium text-midnight">{course.name}</span>
+        <span className="text-xs text-ink/60">
           {course.class_code ? `${course.class_code} · ` : ''}
           {course.ects} ECTS · {course.schedule_text ?? '—'}
           {course.professor ? ` · ${course.professor}` : ''}
@@ -633,7 +650,7 @@ function PillRow({
         className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition ${
           active
             ? activeClass
-            : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+            : 'border-midnight/20 bg-white text-midnight hover:bg-jordy/15'
         }`}
       >
         {active ? activeLabel : inactiveLabel}

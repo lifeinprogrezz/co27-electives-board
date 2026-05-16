@@ -2,15 +2,20 @@ import Link from 'next/link'
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col gap-5">
-      <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-700">
-        ← Home
+    <div className="flex flex-col gap-6">
+      <Link
+        href="/login"
+        className="text-xs text-ink/60 underline decoration-midnight/30 underline-offset-2 transition hover:text-midnight"
+      >
+        ← Back
       </Link>
-      <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">About</h1>
-      <div className="flex flex-col gap-3 text-sm leading-relaxed text-zinc-700">
+      <h1 className="font-serif text-[40px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[48px]">
+        <em className="not-italic font-serif italic text-robroy-deep">about</em>.
+      </h1>
+      <div className="flex max-w-prose flex-col gap-3 text-sm leading-relaxed text-ink">
         <p>
           Add/Drop is a refresh-and-hope game on eOffice. The cohort is already trading
-          electives over WhatsApp DMs — there&apos;s just no central place to see who
+          electives over WhatsApp DMs &mdash; there&rsquo;s just no central place to see who
           wants what.
         </p>
         <p>
@@ -24,7 +29,7 @@ export default function AboutPage() {
             href="https://lifeinprogrezz.com"
             target="_blank"
             rel="noreferrer"
-            className="underline"
+            className="text-midnight underline decoration-midnight/40 underline-offset-2 hover:decoration-midnight"
           >
             Rober Quintero
           </a>{' '}

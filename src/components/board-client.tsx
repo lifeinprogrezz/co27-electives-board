@@ -164,7 +164,7 @@ export function BoardClient({
         <RefreshButton />
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={courseFilter}

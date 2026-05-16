@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile, isProfileComplete } from '@/lib/dal'
-import { signOut } from '@/lib/auth'
 import {
   BoardClient,
   type BoardCourse,
@@ -39,43 +37,18 @@ export default async function BoardPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">The Board</h1>
-          <p className="text-sm text-zinc-600">
-            Drops in red, adds in green. Tap a name to show contact.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <Link
-            href="/calendar"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            Calendar →
-          </Link>
-          <Link
-            href="/profile"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            My listings
-          </Link>
-        </div>
-      </header>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">The Board</h1>
+        <p className="text-sm text-zinc-600">
+          Drops in red, adds in green. Tap a name to show contact.
+        </p>
+      </div>
 
       <BoardClient
         currentUserId={profile.id}
         courses={courses}
         listings={listings}
       />
-
-      <form action={signOut} className="mt-2 self-start">
-        <button
-          type="submit"
-          className="text-xs text-zinc-500 underline hover:text-red-600"
-        >
-          Sign out
-        </button>
-      </form>
     </div>
   )
 }

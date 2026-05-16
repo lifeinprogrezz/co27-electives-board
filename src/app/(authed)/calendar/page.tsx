@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile, isProfileComplete } from '@/lib/dal'
-import { signOut } from '@/lib/auth'
 import {
   CalendarClient,
   type CalendarRow,
@@ -87,36 +85,16 @@ export default async function CalendarPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            Your calendar
-          </h1>
-          <p className="text-sm text-zinc-600">
-            Jun – Dec 2026. Your assigned electives, with pending drops in red and
-            adds in green.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
-          <Link
-            href="/board"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            Board →
-          </Link>
-        </div>
-      </header>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          Your calendar
+        </h1>
+        <p className="text-sm text-zinc-600">
+          Jun – Dec 2026. Pending drops in rose, adds in emerald, kept in sky.
+        </p>
+      </div>
 
       <CalendarClient rows={rows} />
-
-      <form action={signOut} className="mt-2 self-start">
-        <button
-          type="submit"
-          className="text-xs text-zinc-500 underline hover:text-red-600"
-        >
-          Sign out
-        </button>
-      </form>
     </div>
   )
 }

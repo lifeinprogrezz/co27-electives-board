@@ -113,18 +113,10 @@ export function AppHeader({
               role="menu"
               className="absolute right-0 top-full mt-1.5 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white text-sm shadow-lg"
             >
-              <div className="border-b border-zinc-100 px-3 py-2">
+              <div className="px-3 py-2">
                 <p className="truncate font-medium text-zinc-900">{displayName}</p>
                 <p className="truncate text-[11px] text-zinc-500">{email}</p>
               </div>
-              <Link
-                href="/profile"
-                role="menuitem"
-                onClick={() => setMenuOpen(false)}
-                className="block px-3 py-2 text-zinc-700 hover:bg-zinc-50"
-              >
-                Edit profile
-              </Link>
               <form action={signOut} role="menuitem" className="border-t border-zinc-100">
                 <button
                   type="submit"

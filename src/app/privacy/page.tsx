@@ -10,21 +10,21 @@ export default function PrivacyPage() {
         ← Back
       </Link>
       <h1 className="font-serif text-[40px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[48px]">
-        <em className="not-italic font-serif italic text-robroy-deep">privacy</em>.
+        privacy.
       </h1>
 
       <section className="flex max-w-prose flex-col gap-4 text-sm leading-relaxed text-ink">
         <div>
-          <h2 className="font-serif text-lg italic text-midnight">What we store</h2>
+          <h2 className="font-serif text-lg text-midnight">What we store</h2>
           <p className="mt-1">
-            Your ESADE email, your display name, your WhatsApp number (only if you
-            choose to share it), the electives you were assigned, and the courses
-            you list as want-to-drop or want-to-add.
+            Your ESADE email, your display name, your WhatsApp number (only if
+            you choose to share it), the electives you were assigned, and the
+            courses you list as want-to-drop or want-to-add.
           </p>
         </div>
 
         <div>
-          <h2 className="font-serif text-lg italic text-midnight">Why</h2>
+          <h2 className="font-serif text-lg text-midnight">Why</h2>
           <p className="mt-1">
             To help cohort members find each other for elective trades during
             Add/Drop. Nothing else.
@@ -32,27 +32,31 @@ export default function PrivacyPage() {
         </div>
 
         <div>
-          <h2 className="font-serif text-lg italic text-midnight">Who sees it</h2>
+          <h2 className="font-serif text-lg text-midnight">Who sees it</h2>
           <p className="mt-1">
-            Other authenticated Co27 students. Your data is never shared with third
-            parties. The site is not affiliated with ESADE and ESADE doesn&rsquo;t
-            receive your data from it.
+            Other authenticated Co27 students. Your data is never shared with
+            third parties. The site is not affiliated with ESADE and ESADE
+            doesn&rsquo;t receive your data from it.
           </p>
         </div>
 
         <div>
-          <h2 className="font-serif text-lg italic text-midnight">How long</h2>
+          <h2 className="font-serif text-lg text-midnight">How long</h2>
           <p className="mt-1">
-            Deleted on request, or auto-deleted 60 days after the Add/Drop window
-            closes. You can delete your account at any time from the profile page.
+            Deleted on request, or auto-deleted 60 days after the Add/Drop
+            window closes. You can delete your account at any time from the
+            profile page.
           </p>
         </div>
 
         <div>
-          <h2 className="font-serif text-lg italic text-midnight">Contact</h2>
+          <h2 className="font-serif text-lg text-midnight">Contact</h2>
           <p className="mt-1">
-            Questions or deletion requests: WhatsApp Rober Quintero (Co27) or email{' '}
-            <span className="font-mono text-midnight">hello@lifeinprogrezz.com</span>.
+            Questions or deletion requests: WhatsApp Roberto (Co27) or email{' '}
+            <span className="font-mono text-midnight">
+              hello@lifeinprogrezz.com
+            </span>
+            .
           </p>
         </div>
       </section>

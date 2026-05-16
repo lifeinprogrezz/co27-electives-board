@@ -17,7 +17,7 @@ const serif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'Co27 Electives Board',
+  title: 'co27.electives',
   description:
     'Trade Co27 ESADE electives with your cohort. No more refreshing eOffice during Add/Drop.',
 }

@@ -48,11 +48,11 @@ const fieldClass =
 const sectionCard =
   'flex flex-col gap-4 rounded-xl border border-midnight/15 bg-white p-4'
 
-const primaryPill =
-  'rounded-full bg-midnight px-5 py-2.5 font-serif text-base italic text-white shadow-sm transition hover:bg-[#001d52] disabled:cursor-not-allowed disabled:opacity-60'
-
-const secondaryPill =
-  'rounded-full border border-midnight/25 bg-white px-4 py-2 text-sm font-medium text-midnight transition hover:bg-jordy/15 disabled:cursor-not-allowed disabled:opacity-40'
+// Back and Continue share the same shape, size and family — only the fill changes.
+const buttonBase =
+  'rounded-full px-5 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40'
+const primaryBtn = `${buttonBase} bg-midnight text-white shadow-sm hover:bg-[#001d52]`
+const secondaryBtn = `${buttonBase} border border-midnight/25 bg-white text-midnight hover:bg-jordy/15`
 
 function normalizeWhatsappPreview(input: string): string {
   const digits = input.replace(/\D+/g, '')
@@ -191,7 +191,7 @@ export function ProfileForm({
   const whatsappWarning =
     whatsapp.trim() &&
     (whatsappDigits.length < 6 || whatsappDigits.length > 15)
-      ? 'WhatsApp number should be 6–15 digits (international format).'
+      ? 'WhatsApp number should be 6 to 15 digits (international format).'
       : null
 
   const canContinue: Record<Step, boolean> = {
@@ -218,16 +218,7 @@ export function ProfileForm({
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
         <h1 className="font-serif text-[34px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[42px]">
-          {isReturning ? (
-            <>
-              edit your <em className="not-italic font-serif italic text-robroy-deep">profile</em>.
-            </>
-          ) : (
-            <>
-              welcome &mdash; let&rsquo;s{' '}
-              <em className="not-italic font-serif italic text-robroy-deep">set you up</em>.
-            </>
-          )}
+          {isReturning ? 'edit your profile.' : 'welcome. let’s set you up.'}
         </h1>
         <Stepper current={step} onSelect={(s) => isReturning && setStep(s)} canJump={isReturning} />
       </header>
@@ -375,7 +366,7 @@ function StepFooter({
         type="button"
         onClick={() => setStep(Math.max(1, step - 1) as Step)}
         disabled={step === 1}
-        className={secondaryPill}
+        className={secondaryBtn}
       >
         ← Back
       </button>
@@ -384,30 +375,61 @@ function StepFooter({
           type="button"
           onClick={onSave}
           disabled={pending}
-          className={primaryPill}
+          className={primaryBtn}
         >
-          {pending ? 'saving…' : 'save and view the board →'}
+          {pending ? 'Saving…' : 'Save and view the board'}
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setStep(Math.min(4, step + 1) as Step)}
           disabled={!canContinue}
-          className={primaryPill}
+          className={primaryBtn}
         >
-          continue →
+          Continue →
         </button>
       )}
     </div>
   )
 }
 
-function SectionHeader({ title, subtitle }: { title: React.ReactNode; subtitle: string }) {
+function SectionHeader({
+  title,
+  subtitle,
+}: {
+  title: React.ReactNode
+  subtitle: string
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <h2 className="font-serif text-xl italic text-midnight">{title}</h2>
-      <p className="text-xs text-ink/60">{subtitle}</p>
+    <div className="flex flex-col gap-1.5">
+      <h2 className="font-serif text-xl text-midnight sm:text-2xl">{title}</h2>
+      <p className="text-sm leading-relaxed text-ink/70">{subtitle}</p>
     </div>
+  )
+}
+
+function CountBadge({
+  count,
+  label,
+  tone,
+}: {
+  count: number
+  label: string
+  tone: 'neutral' | 'drop' | 'add'
+}) {
+  const cls =
+    tone === 'drop'
+      ? 'bg-robroy/30 text-midnight border-robroy-deep/40'
+      : tone === 'add'
+        ? 'bg-midnight text-white border-midnight'
+        : 'bg-jordy/25 text-midnight border-jordy/50'
+  return (
+    <span
+      className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${cls}`}
+    >
+      <span className="text-sm font-semibold leading-none">{count}</span>
+      <span className="text-[11px] uppercase tracking-wider">{label}</span>
+    </span>
   )
 }
 
@@ -483,9 +505,7 @@ function Step2({
         subtitle="Pick the courses you were allocated in the initial bid."
       />
 
-      <div className="text-xs text-ink">
-        <span className="font-semibold text-midnight">{count}</span> selected
-      </div>
+      <CountBadge count={count} label="selected" tone="neutral" />
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         grouped[term].length === 0 ? null : (
@@ -527,13 +547,8 @@ function Step3({
   return (
     <section className={sectionCard}>
       <SectionHeader
-        title={
-          <>
-            Which of those do you want to{' '}
-            <em className="not-italic font-serif italic text-robroy-deep">drop</em>?
-          </>
-        }
-        subtitle="Mark the ones you'd give up. Classmates can reach out to swap. Skip if you're not dropping anything."
+        title="Which of those do you want to drop?"
+        subtitle="Mark the ones you'd give up. Skip if you're not dropping anything."
       />
 
       {assignedCourses.length === 0 ? (
@@ -543,9 +558,7 @@ function Step3({
         </p>
       ) : (
         <>
-          <div className="text-xs text-ink">
-            <span className="font-semibold text-robroy-deep">{count}</span> to drop
-          </div>
+          <CountBadge count={count} label="to drop" tone="drop" />
           <ul className="flex flex-col divide-y divide-midnight/10">
             {assignedCourses.map((c) => (
               <PillRow
@@ -579,18 +592,11 @@ function Step4({
   return (
     <section className={sectionCard}>
       <SectionHeader
-        title={
-          <>
-            Which courses would you like to{' '}
-            <em className="not-italic font-serif italic text-robroy-deep">add</em>?
-          </>
-        }
-        subtitle="From courses you weren't assigned. Optional — you don't need to pick any."
+        title="Which courses would you like to add?"
+        subtitle="Courses you weren't assigned. Optional."
       />
 
-      <div className="text-xs text-ink">
-        <span className="font-semibold text-midnight">{count}</span> to add
-      </div>
+      <CountBadge count={count} label="to add" tone="add" />
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         unassignedByTerm[term].length === 0 ? null : (
@@ -639,7 +645,7 @@ function PillRow({
         <span className="font-medium text-midnight">{course.name}</span>
         <span className="text-xs text-ink/60">
           {course.class_code ? `${course.class_code} · ` : ''}
-          {course.ects} ECTS · {course.schedule_text ?? '—'}
+          {course.ects} ECTS · {course.schedule_text ?? ''}
           {course.professor ? ` · ${course.professor}` : ''}
         </span>
       </div>

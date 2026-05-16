@@ -43,7 +43,7 @@ export default async function BoardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-serif text-[36px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[44px]">
-          the <em className="not-italic font-serif italic text-robroy-deep">board</em>.
+          the board.
         </h1>
         <p className="text-sm leading-relaxed text-ink">
           Drops in gold, adds in midnight. Tap a name to reveal contact.

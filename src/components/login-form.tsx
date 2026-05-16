@@ -14,8 +14,8 @@ const initialVerify: VerifyOtpState = undefined
 const inputBase =
   'w-full rounded-xl border border-midnight/20 bg-white px-3 py-2.5 text-base text-midnight outline-none transition focus:border-midnight focus:ring-2 focus:ring-midnight/15 placeholder:text-ink/40'
 
-const primaryPill =
-  'inline-flex w-full items-center justify-center rounded-full bg-midnight px-5 py-3 font-serif text-lg italic text-white shadow-sm transition hover:bg-[#001d52] disabled:cursor-not-allowed disabled:opacity-60'
+const primaryBtn =
+  'inline-flex w-full items-center justify-center rounded-full bg-midnight px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#001d52] disabled:cursor-not-allowed disabled:opacity-60'
 
 export function LoginForm() {
   const [sendState, sendAction, sending] = useActionState(
@@ -29,7 +29,10 @@ export function LoginForm() {
 
   return (
     <form action={sendAction} className="flex flex-col gap-3">
-      <label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-ink/70">
+      <label
+        htmlFor="email"
+        className="text-xs font-medium uppercase tracking-wider text-ink/70"
+      >
         ESADE email
       </label>
       <input
@@ -45,8 +48,8 @@ export function LoginForm() {
       {sendState?.ok === false && (
         <p className="text-sm text-robroy-deep">{sendState.error}</p>
       )}
-      <button type="submit" disabled={sending} className={primaryPill}>
-        {sending ? 'sending…' : 'email me a code →'}
+      <button type="submit" disabled={sending} className={primaryBtn}>
+        {sending ? 'Sending…' : 'Email me a code'}
       </button>
       <p className="text-xs leading-relaxed text-ink/60">
         Only ESADE emails (<span className="font-mono">@alumni.esade.edu</span> or{' '}
@@ -65,13 +68,13 @@ function OtpStep({ email }: { email: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-midnight/20 bg-jordy/15 p-4 text-sm text-midnight">
-        <p className="font-serif text-lg italic">Check your inbox.</p>
+        <p className="font-serif text-lg">Check your inbox.</p>
         <p className="mt-1 text-ink">
           We sent a 6-digit sign-in code to{' '}
           <span className="font-mono text-midnight">{email}</span>. The email
-          contains <em className="italic">only</em> the code &mdash; no link to click.
-          Paste it below.
+          contains only the code, no link to click. Paste it below.
         </p>
+
       </div>
 
       <form action={verifyAction} className="flex flex-col gap-3">
@@ -97,10 +100,10 @@ function OtpStep({ email }: { email: string }) {
         {verifyState?.ok === false && (
           <p className="text-sm text-robroy-deep">{verifyState.error}</p>
         )}
-        <button type="submit" disabled={verifying} className={primaryPill}>
-          {verifying ? 'verifying…' : 'sign in →'}
+        <button type="submit" disabled={verifying} className={primaryBtn}>
+          {verifying ? 'Verifying…' : 'Sign in'}
         </button>
-        <p className="text-xs leading-relaxed text-ink/60">
+        <p className="text-center text-xs leading-relaxed text-ink/60">
           Code expires in an hour. Didn&apos;t arrive? Check spam, then{' '}
           <a
             href="/login"

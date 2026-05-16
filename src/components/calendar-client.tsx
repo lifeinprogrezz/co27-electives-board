@@ -199,7 +199,7 @@ export function CalendarClient({ rows }: Props) {
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-midnight/15 bg-jordy/10 p-6 text-center text-sm text-ink">
-        <p className="font-serif text-xl italic text-midnight">
+        <p className="font-serif text-xl text-midnight">
           Nothing on your calendar yet.
         </p>
         <p className="mt-1.5">
@@ -252,10 +252,8 @@ export function CalendarClient({ rows }: Props) {
         })}
       </div>
 
-      <p className="text-[11px] leading-relaxed text-ink/60">
-        Top half of each day = morning (AM); bottom half = afternoon (PM). Two
-        courses in the same slot = side-by-side strips = clash. Tap any day for
-        full details.
+      <p className="text-center text-[11px] text-ink/60">
+        Tap any day for full details.
       </p>
     </div>
   )
@@ -312,7 +310,7 @@ function MonthBlock({
     <section className="flex flex-col gap-2.5">
       <header className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-serif text-lg italic text-midnight sm:text-xl">
+          <h2 className="font-serif text-lg text-midnight sm:text-xl">
             {month.name} {month.year}
           </h2>
           {!hasAny && <span className="text-[11px] text-ink/40">no sessions</span>}
@@ -420,7 +418,9 @@ function DayCell({
   onSelect: () => void
 }) {
   if (!cell) {
-    return <div className="h-[96px] border-l border-t border-midnight/10 bg-jordy/[0.04] first:border-l-0" />
+    return (
+      <div className="h-[104px] border-l border-t border-midnight/10 bg-jordy/[0.04] first:border-l-0" />
+    )
   }
 
   const continuous = buckets?.continuous ?? []
@@ -428,16 +428,21 @@ function DayCell({
   const pm = buckets?.pm ?? []
   const isClickable = continuous.length > 0 || am.length > 0 || pm.length > 0
 
+  // Selected state floats above the grid as a rounded chip — softer than a square inset ring.
+  const selectedRing = isSelected
+    ? 'rounded-lg ring-2 ring-midnight ring-offset-0 z-10 bg-jordy/10'
+    : ''
+
   return (
     <button
       type="button"
       onClick={onSelect}
       disabled={!isClickable}
-      className={`group relative flex h-[96px] flex-col border-l border-t border-midnight/10 text-left transition first:border-l-0 ${
-        isSelected ? 'ring-2 ring-midnight ring-inset' : ''
-      } ${isClickable ? 'cursor-pointer hover:bg-jordy/10' : 'cursor-default'}`}
+      className={`group relative flex h-[104px] flex-col border-l border-t border-midnight/10 text-left transition first:border-l-0 ${selectedRing} ${
+        isClickable ? 'cursor-pointer hover:bg-jordy/10' : 'cursor-default'
+      }`}
     >
-      <span className="px-1 pt-0.5 text-[10px] font-medium text-ink/60 sm:text-[11px]">
+      <span className="px-1.5 pt-1 text-[10px] font-medium text-ink/60 sm:text-[11px]">
         {cell.day}
       </span>
       <ContinuousZone tags={continuous} />
@@ -453,13 +458,13 @@ function ContinuousZone({ tags }: { tags: Tag[] }) {
     return <div className="h-2 sm:h-2.5" />
   }
   return (
-    <div className="flex h-2 sm:h-2.5">
+    <div className="flex h-2 px-1 sm:h-2.5">
       {tags.map((t, i) => {
         const s = STATUS_STYLE[t.status]
         return (
           <div
             key={`${t.rowId}-${i}`}
-            className={`flex-1 ${s.solid} ${i > 0 ? 'border-l border-white/60' : ''}`}
+            className={`flex-1 rounded-sm ${s.solid} ${i > 0 ? 'ml-0.5' : ''}`}
             title={t.name}
           />
         )
@@ -471,20 +476,16 @@ function ContinuousZone({ tags }: { tags: Tag[] }) {
 function SlotZone({ label, tags }: { label: 'AM' | 'PM'; tags: Tag[] }) {
   const isEmpty = tags.length === 0
   return (
-    <div
-      className={`relative flex flex-1 items-stretch ${
-        isEmpty ? 'bg-white' : ''
-      }`}
-    >
+    <div className="relative flex flex-1 items-stretch">
       <span
-        className={`pointer-events-none absolute left-0.5 top-0 text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
+        className={`pointer-events-none absolute left-1 top-0 text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
           isEmpty ? 'text-ink/30' : 'text-midnight/40'
         }`}
       >
         {label}
       </span>
       {!isEmpty && (
-        <div className="flex flex-1 items-stretch pl-4 pr-0.5 py-0.5">
+        <div className="flex flex-1 items-stretch gap-0.5 px-1.5 pl-5 py-1">
           {tags.length === 1 ? (
             <ChipSolo tag={tags[0]} />
           ) : (
@@ -502,7 +503,7 @@ function ChipSolo({ tag }: { tag: Tag }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm border px-1 text-[9px] font-semibold leading-tight sm:text-[10px] ${s.solid} ${s.border} ${s.chipText}`}
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-md border px-1 text-[9px] font-semibold leading-tight sm:text-[10px] ${s.solid} ${s.border} ${s.chipText}`}
     >
       {tag.code}
     </span>
@@ -513,7 +514,7 @@ function ChipSplit({ tag, count }: { tag: Tag; count: number }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden border-r border-white/60 last:border-r-0 text-[8px] font-bold leading-none ${s.solid} ${s.chipText} ${count >= 3 ? 'min-w-0' : ''}`}
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm text-[8px] font-bold leading-none ${s.solid} ${s.chipText} ${count >= 3 ? 'min-w-0' : ''}`}
     >
       <span className="truncate px-0.5">{count > 3 ? '•' : tag.code}</span>
     </span>
@@ -532,7 +533,9 @@ function SelectedDayDetail({
   return (
     <div className="rounded-xl border border-midnight/20 bg-white p-3 shadow-sm">
       <header className="mb-2 flex items-baseline justify-between">
-        <h4 className="font-serif text-base italic text-midnight">{formatLongDate(iso)}</h4>
+        <h4 className="font-serif text-base text-midnight">
+          {formatLongDate(iso)}
+        </h4>
         <button
           type="button"
           onClick={onClose}
@@ -559,7 +562,7 @@ function SlotDetailRow({ label, tags }: { label: string; tags: Tag[] }) {
         {label}
       </span>
       {tags.length === 0 ? (
-        <span className="text-ink/40">— free —</span>
+        <span className="text-ink/40">free</span>
       ) : (
         <ul className="flex flex-col gap-1">
           {tags.map((t, i) => {
@@ -579,7 +582,7 @@ function SlotDetailRow({ label, tags }: { label: string; tags: Tag[] }) {
           })}
           {tags.length > 1 && (
             <li className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
-              ⚠ Clash — {tags.length} courses in this slot
+              ⚠ Clash: {tags.length} courses in this slot
             </li>
           )}
         </ul>
@@ -629,41 +632,29 @@ function CreditsCounter({
         : 'text-ink/60'
 
   return (
-    <section className="rounded-xl border border-midnight/15 bg-white p-3 sm:p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <div className="flex items-baseline gap-3">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
-              Now
-            </span>
-            <span className="font-serif text-2xl italic text-midnight sm:text-3xl">
-              {fmtEcts(now)}{' '}
-              <span className="font-sans text-xs font-medium not-italic text-ink/60">ECTS</span>
-            </span>
-          </div>
+    <section className="rounded-xl border border-midnight/15 bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Left: Now → After numbers (top-aligned, same baseline) */}
+        <div className="flex items-end gap-3">
+          <Metric label="Now" value={fmtEcts(now)} />
           {hasChanges && (
             <>
-              <span className="text-midnight/30">→</span>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
-                  After changes
-                </span>
-                <span className="font-serif text-2xl italic text-midnight sm:text-3xl">
-                  {fmtEcts(after)}{' '}
-                  <span className="font-sans text-xs font-medium not-italic text-ink/60">ECTS</span>
-                </span>
-              </div>
+              <span className="pb-2 text-midnight/30">→</span>
+              <Metric label="After changes" value={fmtEcts(after)} />
             </>
           )}
         </div>
 
+        {/* Right: net delta — packaged as a single chip so it doesn't float */}
         {hasChanges && (
-          <div className="flex flex-col items-end gap-0.5 text-[11px] sm:text-xs">
-            <span className={`font-semibold ${deltaColor}`}>
+          <div className="flex flex-col items-end gap-0.5 self-end">
+            <span
+              className={`inline-flex items-center rounded-full bg-jordy/15 px-2.5 py-1 text-xs font-semibold ${deltaColor}`}
+            >
               {deltaSign}
               {fmtEcts(Math.abs(delta))} ECTS net
             </span>
-            <span className="text-ink/60">
+            <span className="text-[11px] text-ink/60">
               {droppingEcts > 0 && (
                 <span className="text-robroy-deep">
                   −{fmtEcts(droppingEcts)} dropping
@@ -680,5 +671,19 @@ function CreditsCounter({
         )}
       </div>
     </section>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
+        {label}
+      </span>
+      <span className="font-serif text-3xl leading-none text-midnight">
+        {value}{' '}
+        <span className="font-sans text-xs font-medium text-ink/60">ECTS</span>
+      </span>
+    </div>
   )
 }

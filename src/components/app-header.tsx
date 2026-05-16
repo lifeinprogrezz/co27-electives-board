@@ -51,9 +51,9 @@ export function AppHeader({ name, email }: Props) {
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6">
         <Link
           href="/board"
-          className="font-serif text-[18px] italic leading-none text-midnight sm:text-[20px]"
+          className="font-serif text-[18px] leading-none text-midnight sm:text-[20px]"
         >
-          co27.exchange
+          co27.electives
         </Link>
 
         <nav className="flex items-center gap-0.5 rounded-full border border-midnight/15 bg-white p-0.5">
@@ -82,7 +82,7 @@ export function AppHeader({ name, email }: Props) {
             onClick={() => setMenuOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-midnight font-serif text-xs italic text-white shadow-sm transition hover:bg-[#001d52] sm:text-sm"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-midnight text-xs font-medium text-white shadow-sm transition hover:bg-[#001d52] sm:text-sm"
           >
             {initial}
           </button>

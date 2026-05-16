@@ -142,7 +142,7 @@ export function BoardClient({
   if (listings.length === 0) {
     return (
       <div className="rounded-2xl border border-midnight/15 bg-jordy/10 p-6 text-center text-sm text-ink">
-        <p className="font-serif text-xl italic text-midnight">Nobody&rsquo;s posted yet.</p>
+        <p className="font-serif text-xl text-midnight">Nobody&rsquo;s posted yet.</p>
         <p className="mt-1.5">
           Be the first.{' '}
           <Link
@@ -158,11 +158,18 @@ export function BoardClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-ink/70">
-          <span className="font-semibold text-robroy-deep">{totalDrops}</span> drops ·{' '}
-          <span className="font-semibold text-midnight">{totalAdds}</span> adds
-        </p>
+      {/* Status bar: drop/add counts + refresh, in one card so nothing floats */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-midnight/15 bg-white px-3 py-2">
+        <div className="flex items-center gap-2 text-xs text-ink">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-robroy/30 px-2.5 py-1 font-medium text-midnight">
+            <span className="font-semibold">{totalDrops}</span>
+            <span className="text-[11px] uppercase tracking-wider">drops</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-midnight px-2.5 py-1 font-medium text-white">
+            <span className="font-semibold">{totalAdds}</span>
+            <span className="text-[11px] uppercase tracking-wider">adds</span>
+          </span>
+        </div>
         <RefreshButton />
       </div>
 
@@ -194,7 +201,7 @@ export function BoardClient({
         />
       </div>
 
-      <ScopeTabs scope={scope} setScope={setScope} myCount={myCourseSet.size} />
+      <ScopeTabs scope={scope} setScope={setScope} />
 
       {filteredCourses.length === 0 ? (
         <p className="rounded-xl border border-midnight/15 bg-jordy/10 px-3 py-4 text-center text-sm text-ink/70">
@@ -270,12 +277,12 @@ function CourseCard({
         className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-jordy/5"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="truncate font-serif text-lg italic text-midnight">
+          <h3 className="truncate text-base font-medium text-midnight">
             {course.name}
           </h3>
           <p className="truncate text-xs text-ink/60">
             {course.class_code ? `${course.class_code} · ` : ''}
-            {course.ects} ECTS · {course.schedule_text ?? '—'}
+            {course.ects} ECTS · {course.schedule_text ?? ''}
             {course.professor ? ` · ${course.professor}` : ''}
           </p>
         </div>
@@ -296,7 +303,7 @@ function CourseCard({
       {isExpanded && (
         <div className="grid grid-cols-1 gap-3 border-t border-midnight/10 p-4 sm:grid-cols-2">
           <ListingColumn
-            label="Has & wants to drop"
+            label="Has and wants to drop"
             tone="drop"
             listings={drop}
             currentUserId={currentUserId}
@@ -362,7 +369,7 @@ function ListingColumn({
         {label} ({listings.length})
       </span>
       {listings.length === 0 ? (
-        <p className="text-xs text-ink/40">—</p>
+        <p className="text-xs text-ink/40">none</p>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {listings.map((l) => (
@@ -407,7 +414,7 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
       <div className="flex items-center justify-between gap-2">
         <span className="flex flex-col leading-tight">
           <span className="font-medium text-midnight">{name}</span>
-          {isMe && <span className="text-[11px] italic text-ink/60">you</span>}
+          {isMe && <span className="text-[11px] text-ink/60">you</span>}
         </span>
         {isMe ? (
           <div className="flex shrink-0 items-center gap-1">
@@ -457,15 +464,13 @@ function UserRow({ listing, isMe }: { listing: BoardListing; isMe: boolean }) {
 function ScopeTabs({
   scope,
   setScope,
-  myCount,
 }: {
   scope: 'all' | 'mine'
   setScope: (s: 'all' | 'mine') => void
-  myCount: number
 }) {
-  const options: { id: 'all' | 'mine'; label: string; subtitle?: string }[] = [
+  const options: { id: 'all' | 'mine'; label: string }[] = [
     { id: 'all', label: 'All courses' },
-    { id: 'mine', label: 'My courses', subtitle: myCount > 0 ? `${myCount}` : undefined },
+    { id: 'mine', label: 'My courses' },
   ]
   return (
     <div className="flex items-center gap-1 self-start rounded-full border border-midnight/15 bg-white p-0.5">
@@ -476,22 +481,13 @@ function ScopeTabs({
             key={o.id}
             type="button"
             onClick={() => setScope(o.id)}
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
               isActive
                 ? 'bg-midnight text-white shadow-sm'
                 : 'text-ink hover:text-midnight'
             }`}
           >
-            <span>{o.label}</span>
-            {o.subtitle && (
-              <span
-                className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-jordy/30 text-midnight'
-                }`}
-              >
-                {o.subtitle}
-              </span>
-            )}
+            {o.label}
           </button>
         )
       })}
@@ -530,11 +526,11 @@ function RefreshButton() {
       onClick={onClick}
       disabled={isRefreshing}
       title="Refresh the board to pull in new listings"
-      className="inline-flex items-center gap-1 text-xs text-ink/60 transition hover:text-midnight disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 rounded-full border border-midnight/15 bg-white px-2.5 py-1 text-xs font-medium text-ink transition hover:border-midnight/40 hover:text-midnight disabled:opacity-60"
     >
       <span
         aria-hidden
-        className={`inline-block ${isRefreshing ? 'animate-spin' : ''}`}
+        className={`inline-block leading-none ${isRefreshing ? 'animate-spin' : ''}`}
       >
         ↻
       </span>

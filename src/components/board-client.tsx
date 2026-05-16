@@ -156,15 +156,15 @@ export function BoardClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="flex items-center gap-2 text-xs text-zinc-500">
-          <span>
-            <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
-            <span className="font-medium text-emerald-700">{totalAdds}</span> adds
-          </span>
-          <span className="text-zinc-300">·</span>
-          <RefreshButton />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-zinc-500">
+          <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
+          <span className="font-medium text-emerald-700">{totalAdds}</span> adds
         </p>
+        <RefreshButton />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={courseFilter}

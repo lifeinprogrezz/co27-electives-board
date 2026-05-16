@@ -174,24 +174,36 @@ export function BoardClient({
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <select
-          value={courseFilter}
-          onChange={(e) => pickCourseFilter(e.target.value)}
-          className={`${fieldClass} sm:w-auto`}
-        >
-          <option value="all">All courses</option>
-          {(['summer', 'september', 'term4'] as Term[]).map((term) =>
-            coursesByTerm[term].length === 0 ? null : (
-              <optgroup key={term} label={TERM_LABELS[term]}>
-                {coursesByTerm[term].map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ),
-          )}
-        </select>
+        <div className="relative w-full sm:w-auto">
+          <select
+            value={courseFilter}
+            onChange={(e) => pickCourseFilter(e.target.value)}
+            className={`${fieldClass} appearance-none pr-9`}
+          >
+            <option value="all">All courses</option>
+            {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+              coursesByTerm[term].length === 0 ? null : (
+                <optgroup key={term} label={TERM_LABELS[term]}>
+                  {coursesByTerm[term].map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ),
+            )}
+          </select>
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/60"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
         <input
           type="search"
           placeholder="Search name or professor…"

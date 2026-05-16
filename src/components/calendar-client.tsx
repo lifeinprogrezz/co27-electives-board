@@ -36,47 +36,53 @@ const MONTHS: MonthDef[] = [
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
+// Chip styles are intentionally pastel so the calendar's date grid + AM/PM
+// labels read as the dominant structure, with course chips as ambient marks.
 const STATUS_STYLE: Record<
   CalendarStatus,
   {
-    solid: string
+    strip: string
+    chipBg: string
+    chipBorder: string
+    chipText: string
     softBg: string
     border: string
     text: string
     dot: string
-    badge: string
-    chipText: string
     label: string
   }
 > = {
   kept: {
-    solid: 'bg-jordy',
+    strip: 'bg-jordy/55',
+    chipBg: 'bg-jordy/35',
+    chipBorder: 'border-jordy/40',
+    chipText: 'text-midnight',
     softBg: 'bg-jordy/15',
-    border: 'border-jordy',
+    border: 'border-jordy/40',
     text: 'text-midnight',
     dot: 'bg-jordy',
-    badge: 'bg-jordy/25 text-midnight border-jordy/50',
-    chipText: 'text-midnight',
     label: 'Keeping',
   },
   dropping: {
-    solid: 'bg-robroy',
+    strip: 'bg-robroy/65',
+    chipBg: 'bg-robroy/45',
+    chipBorder: 'border-robroy-deep/40',
+    chipText: 'text-midnight',
     softBg: 'bg-robroy/20',
-    border: 'border-robroy-deep',
+    border: 'border-robroy-deep/40',
     text: 'text-robroy-deep',
     dot: 'bg-robroy-deep',
-    badge: 'bg-robroy/30 text-midnight border-robroy-deep/50',
-    chipText: 'text-midnight',
     label: 'Dropping',
   },
   adding: {
-    solid: 'bg-midnight',
+    strip: 'bg-midnight/30',
+    chipBg: 'bg-midnight/18',
+    chipBorder: 'border-midnight/30',
+    chipText: 'text-midnight',
     softBg: 'bg-midnight/10',
-    border: 'border-midnight',
+    border: 'border-midnight/30',
     text: 'text-midnight',
     dot: 'bg-midnight',
-    badge: 'bg-midnight text-white border-midnight',
-    chipText: 'text-white',
     label: 'Adding',
   },
 }
@@ -310,7 +316,7 @@ function MonthBlock({
     <section className="flex flex-col gap-2.5">
       <header className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-serif text-lg text-midnight sm:text-xl">
+          <h2 className="text-lg font-semibold tracking-tight text-midnight sm:text-xl">
             {month.name} {month.year}
           </h2>
           {!hasAny && <span className="text-[11px] text-ink/40">no sessions</span>}
@@ -337,11 +343,11 @@ function MonthBlock({
       </header>
 
       <div className="overflow-hidden rounded-xl border border-midnight/15 bg-white">
-        <div className="grid grid-cols-5 border-b border-midnight/10 bg-jordy/5">
+        <div className="grid grid-cols-5 border-b border-midnight/15 bg-jordy/8">
           {WEEKDAY_LABELS.map((w) => (
             <div
               key={w}
-              className="px-1 py-1.5 text-center text-[10px] font-medium uppercase tracking-wider text-ink/60 sm:text-xs"
+              className="px-1 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-midnight sm:text-xs"
             >
               {w}
             </div>
@@ -385,24 +391,22 @@ function MonthGroupLine({
 }) {
   if (rows.length === 0) return null
   const style = STATUS_STYLE[status]
+  // Render as a true paragraph: the dot+label is inline with the course list,
+  // so wrapping flows continuously instead of jumping to a new column.
   return (
-    <div className="flex flex-wrap items-baseline gap-1.5">
-      <span className={`inline-flex items-center gap-1 font-medium ${style.text}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-        {style.label}:
-      </span>
-      <span className="text-ink">
-        {rows.map((r, i) => (
-          <span key={r.id}>
-            {i > 0 ? ', ' : ''}
-            <span className={style.text}>{r.name}</span>
-            {continuousIds.has(r.id) && (
-              <span className="text-ink/40"> (continuous)</span>
-            )}
-          </span>
-        ))}
-      </span>
-    </div>
+    <p className="text-[11px] leading-relaxed text-ink sm:text-xs">
+      <span className={`mr-1 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full align-middle ${style.dot}`} />
+      <span className={`font-semibold ${style.text}`}>{style.label}:</span>{' '}
+      {rows.map((r, i) => (
+        <span key={r.id}>
+          {i > 0 ? ', ' : ''}
+          <span className={style.text}>{r.name}</span>
+          {continuousIds.has(r.id) && (
+            <span className="text-ink/40"> (continuous)</span>
+          )}
+        </span>
+      ))}
+    </p>
   )
 }
 
@@ -442,7 +446,7 @@ function DayCell({
         isClickable ? 'cursor-pointer hover:bg-jordy/10' : 'cursor-default'
       }`}
     >
-      <span className="px-1.5 pt-1 text-[10px] font-medium text-ink/60 sm:text-[11px]">
+      <span className="px-1.5 pt-1 text-xs font-semibold text-midnight sm:text-[13px]">
         {cell.day}
       </span>
       <ContinuousZone tags={continuous} />
@@ -464,7 +468,7 @@ function ContinuousZone({ tags }: { tags: Tag[] }) {
         return (
           <div
             key={`${t.rowId}-${i}`}
-            className={`flex-1 rounded-sm ${s.solid} ${i > 0 ? 'ml-0.5' : ''}`}
+            className={`flex-1 rounded-sm ${s.strip} ${i > 0 ? 'ml-0.5' : ''}`}
             title={t.name}
           />
         )
@@ -478,8 +482,8 @@ function SlotZone({ label, tags }: { label: 'AM' | 'PM'; tags: Tag[] }) {
   return (
     <div className="relative flex flex-1 items-stretch">
       <span
-        className={`pointer-events-none absolute left-1 top-0 text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
-          isEmpty ? 'text-ink/30' : 'text-midnight/40'
+        className={`pointer-events-none absolute left-1 top-0 text-[9px] font-semibold uppercase tracking-wider sm:text-[10px] ${
+          isEmpty ? 'text-midnight/30' : 'text-midnight/70'
         }`}
       >
         {label}
@@ -503,7 +507,7 @@ function ChipSolo({ tag }: { tag: Tag }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden rounded-md border px-1 text-[9px] font-semibold leading-tight sm:text-[10px] ${s.solid} ${s.border} ${s.chipText}`}
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-md border px-1 text-[9px] font-semibold leading-tight sm:text-[10px] ${s.chipBg} ${s.chipBorder} ${s.chipText}`}
     >
       {tag.code}
     </span>
@@ -514,7 +518,7 @@ function ChipSplit({ tag, count }: { tag: Tag; count: number }) {
   const s = STATUS_STYLE[tag.status]
   return (
     <span
-      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm text-[8px] font-bold leading-none ${s.solid} ${s.chipText} ${count >= 3 ? 'min-w-0' : ''}`}
+      className={`flex flex-1 items-center justify-center overflow-hidden rounded-sm text-[8px] font-bold leading-none ${s.chipBg} ${s.chipText} ${count >= 3 ? 'min-w-0' : ''}`}
     >
       <span className="truncate px-0.5">{count > 3 ? '•' : tag.code}</span>
     </span>
@@ -533,7 +537,7 @@ function SelectedDayDetail({
   return (
     <div className="rounded-xl border border-midnight/20 bg-white p-3 shadow-sm">
       <header className="mb-2 flex items-baseline justify-between">
-        <h4 className="font-serif text-base text-midnight">
+        <h4 className="text-base font-semibold tracking-tight text-midnight">
           {formatLongDate(iso)}
         </h4>
         <button
@@ -634,7 +638,6 @@ function CreditsCounter({
   return (
     <section className="rounded-xl border border-midnight/15 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* Left: Now → After numbers (top-aligned, same baseline) */}
         <div className="flex items-end gap-3">
           <Metric label="Now" value={fmtEcts(now)} />
           {hasChanges && (
@@ -645,29 +648,13 @@ function CreditsCounter({
           )}
         </div>
 
-        {/* Right: net delta — packaged as a single chip so it doesn't float */}
         {hasChanges && (
-          <div className="flex flex-col items-end gap-0.5 self-end">
-            <span
-              className={`inline-flex items-center rounded-full bg-jordy/15 px-2.5 py-1 text-xs font-semibold ${deltaColor}`}
-            >
-              {deltaSign}
-              {fmtEcts(Math.abs(delta))} ECTS net
-            </span>
-            <span className="text-[11px] text-ink/60">
-              {droppingEcts > 0 && (
-                <span className="text-robroy-deep">
-                  −{fmtEcts(droppingEcts)} dropping
-                </span>
-              )}
-              {droppingEcts > 0 && addingEcts > 0 && <span> · </span>}
-              {addingEcts > 0 && (
-                <span className="text-midnight">
-                  +{fmtEcts(addingEcts)} adding
-                </span>
-              )}
-            </span>
-          </div>
+          <span
+            className={`inline-flex items-center rounded-full bg-jordy/15 px-3 py-1.5 text-sm font-semibold ${deltaColor}`}
+          >
+            {deltaSign}
+            {fmtEcts(Math.abs(delta))} ECTS net
+          </span>
         )}
       </div>
     </section>
@@ -680,9 +667,9 @@ function Metric({ label, value }: { label: string; value: string }) {
       <span className="text-[10px] font-medium uppercase tracking-wider text-ink/60">
         {label}
       </span>
-      <span className="font-serif text-3xl leading-none text-midnight">
+      <span className="text-3xl font-semibold leading-none tracking-tight text-midnight">
         {value}{' '}
-        <span className="font-sans text-xs font-medium text-ink/60">ECTS</span>
+        <span className="text-xs font-medium text-ink/60">ECTS</span>
       </span>
     </div>
   )

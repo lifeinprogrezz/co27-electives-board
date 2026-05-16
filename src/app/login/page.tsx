@@ -24,11 +24,11 @@ export default async function LoginPage({
 
       <header className="flex flex-col gap-3 pt-6">
         <h1 className="font-serif text-[44px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[56px]">
-          sign in.
+          sign <span className="text-robroy-deep">in</span>.
         </h1>
         <p className="max-w-prose text-sm leading-relaxed text-ink">
           Trade Co27 electives with your cohort. Post the courses you want to
-          drop, see who wants them, and settle the swap on WhatsApp.
+          drop, see who wants them, and forget about Add/Drop anxiety.
         </p>
       </header>
 

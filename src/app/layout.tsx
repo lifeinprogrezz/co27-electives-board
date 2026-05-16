@@ -5,7 +5,7 @@ import { Footer } from '@/components/footer'
 
 const sans = Geist({
   variable: '--font-geist',
-  weight: ['400', '500'],
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
 })
 

@@ -31,7 +31,7 @@ export default function AboutPage() {
             rel="noreferrer"
             className="text-midnight underline decoration-midnight/40 underline-offset-2 hover:decoration-midnight"
           >
-            Roberto
+            Roberto Quintero
           </a>
           , Co27. Not affiliated with ESADE. Open feedback welcome.
         </p>

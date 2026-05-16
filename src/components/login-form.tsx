@@ -68,7 +68,7 @@ function OtpStep({ email }: { email: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-midnight/20 bg-jordy/15 p-4 text-sm text-midnight">
-        <p className="font-serif text-lg">Check your inbox.</p>
+        <p className="text-lg font-semibold tracking-tight">Check your inbox.</p>
         <p className="mt-1 text-ink">
           We sent a 6-digit sign-in code to{' '}
           <span className="font-mono text-midnight">{email}</span>. The email

@@ -87,7 +87,7 @@ export default async function CalendarPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-serif text-[36px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[44px]">
-          your calendar.
+          your <span className="text-robroy-deep">calendar</span>.
         </h1>
         <p className="text-sm leading-relaxed text-ink">
           June to December 2026. Drops in gold, adds in midnight, kept in sky.

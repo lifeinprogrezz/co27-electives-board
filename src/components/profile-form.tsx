@@ -218,7 +218,16 @@ export function ProfileForm({
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
         <h1 className="font-serif text-[34px] leading-[0.95] tracking-[-0.02em] text-midnight sm:text-[42px]">
-          {isReturning ? 'edit your profile.' : 'welcome. let’s set you up.'}
+          {isReturning ? (
+            <>
+              edit your <span className="text-robroy-deep">profile</span>.
+            </>
+          ) : (
+            <>
+              <span className="text-robroy-deep">welcome</span>. let&rsquo;s set
+              you up.
+            </>
+          )}
         </h1>
         <Stepper current={step} onSelect={(s) => isReturning && setStep(s)} canJump={isReturning} />
       </header>
@@ -402,7 +411,9 @@ function SectionHeader({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <h2 className="font-serif text-xl text-midnight sm:text-2xl">{title}</h2>
+      <h2 className="text-lg font-semibold tracking-tight text-midnight sm:text-xl">
+        {title}
+      </h2>
       <p className="text-sm leading-relaxed text-ink/70">{subtitle}</p>
     </div>
   )
@@ -593,7 +604,7 @@ function Step4({
     <section className={sectionCard}>
       <SectionHeader
         title="Which courses would you like to add?"
-        subtitle="Courses you weren't assigned. Optional."
+        subtitle="Courses you weren't assigned."
       />
 
       <CountBadge count={count} label="to add" tone="add" />

@@ -56,7 +56,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-midnight/10 py-6">
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-2 px-4 text-center text-xs text-ink/70 sm:px-6">
         <div className="flex items-center gap-1.5">
-          <span>Built by Roberto</span>
+          <span>Built by Roberto Quintero</span>
           <a
             href="https://www.linkedin.com/in/robertoquinterodelaiglesia"
             target="_blank"

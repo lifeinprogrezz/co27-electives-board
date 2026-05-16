@@ -37,6 +37,9 @@ yarn-error.log*
 # claude
 .claude/
 
+# local session log (kept on disk, never published)
+SESSION_LOG.md
+
 # Playwright smoke-test artifacts
 .playwright-mcp/
 *.png

@@ -28,7 +28,7 @@ export default async function LoginPage({
         </h1>
         <p className="max-w-prose text-sm leading-relaxed text-ink">
           Trade Co27 electives with your cohort. Post the courses you want to
-          drop, see who wants them, and forget about Add/Drop anxiety.
+          drop, see who wants them, and forget about the eOffice refresh game.
         </p>
       </header>
 

@@ -190,6 +190,24 @@ export function ProfileForm({
   const dropIdsArr = [...drops]
   const addIdsArr = [...adds]
 
+  const formRef = useRef<HTMLFormElement | null>(null)
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    // Only the Save button is allowed to submit. Any other path (Enter
+    // in an input, errant button without explicit type) is blocked here.
+    if (e.nativeEvent instanceof SubmitEvent) {
+      const submitter = e.nativeEvent.submitter as HTMLElement | null
+      if (!submitter?.dataset?.save) {
+        e.preventDefault()
+        return
+      }
+    } else {
+      e.preventDefault()
+      return
+    }
+    clearDraft()
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-2">
@@ -199,7 +217,12 @@ export function ProfileForm({
         <Stepper current={step} onSelect={(s) => isReturning && setStep(s)} canJump={isReturning} />
       </header>
 
-      <form action={action} className="flex flex-col gap-5">
+      <form
+        ref={formRef}
+        action={action}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5"
+      >
         {/* Hidden fields keep ALL state in the form on submit. */}
         <input type="hidden" name="name" value={name} />
         <input type="hidden" name="whatsapp" value={whatsapp} />
@@ -258,7 +281,6 @@ export function ProfileForm({
           setStep={setStep}
           canContinue={canContinue[step]}
           pending={pending}
-          onSave={clearDraft}
         />
       </form>
     </div>
@@ -324,13 +346,11 @@ function StepFooter({
   setStep,
   canContinue,
   pending,
-  onSave,
 }: {
   step: Step
   setStep: (s: Step) => void
   canContinue: boolean
   pending: boolean
-  onSave: () => void
 }) {
   const isLast = step === 4
   return (
@@ -346,7 +366,7 @@ function StepFooter({
       {isLast ? (
         <button
           type="submit"
-          onClick={onSave}
+          data-save="true"
           disabled={pending}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
         >

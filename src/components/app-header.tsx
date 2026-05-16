@@ -32,9 +32,9 @@ export function AppHeader({
   const displayName = name?.trim() || email.split('@')[0]
 
   const tabs: { href: string; label: string; count?: number }[] = [
+    { href: '/profile', label: 'Profile', count: profileCompleteCount },
     { href: '/board', label: 'Board', count: boardCount },
     { href: '/calendar', label: 'Calendar', count: calendarCount },
-    { href: '/profile', label: 'Profile', count: profileCompleteCount },
   ]
 
   // Close the menu on outside click / Esc.

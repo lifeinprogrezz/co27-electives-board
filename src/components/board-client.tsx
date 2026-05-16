@@ -156,16 +156,15 @@ export function BoardClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-zinc-500">
-          <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
-          <span className="font-medium text-emerald-700">{totalAdds}</span> adds
-        </p>
-        <RefreshButton />
-      </div>
-
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="hidden sm:inline" />
+        <p className="flex items-center gap-2 text-xs text-zinc-500">
+          <span>
+            <span className="font-medium text-red-700">{totalDrops}</span> drops ·{' '}
+            <span className="font-medium text-emerald-700">{totalAdds}</span> adds
+          </span>
+          <span className="text-zinc-300">·</span>
+          <RefreshButton />
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={courseFilter}
@@ -530,17 +529,16 @@ function RefreshButton() {
       type="button"
       onClick={onClick}
       disabled={isRefreshing}
-      className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
       title="Refresh the board to pull in new listings"
+      className="inline-flex items-center gap-1 text-xs text-zinc-500 transition hover:text-zinc-900 disabled:opacity-60"
     >
       <span
         aria-hidden
         className={`inline-block ${isRefreshing ? 'animate-spin' : ''}`}
       >
-        ⟳
+        ↻
       </span>
-      <span>Refresh</span>
-      <span className="text-zinc-400">· {ago}</span>
+      <span>{ago}</span>
     </button>
   )
 }

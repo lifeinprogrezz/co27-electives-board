@@ -8,34 +8,25 @@ import { signOut } from '@/lib/auth'
 interface Props {
   name: string | null
   email: string
-  boardCount?: number
-  calendarCount?: number
-  profileCompleteCount?: number
 }
+
+const TABS = [
+  { href: '/profile', label: 'Profile' },
+  { href: '/board', label: 'Board' },
+  { href: '/calendar', label: 'Calendar' },
+]
 
 function initialFor(name: string | null, email: string): string {
   const source = (name?.trim() || email).trim()
   return (source[0] ?? '?').toUpperCase()
 }
 
-export function AppHeader({
-  name,
-  email,
-  boardCount,
-  calendarCount,
-  profileCompleteCount,
-}: Props) {
+export function AppHeader({ name, email }: Props) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const initial = initialFor(name, email)
   const displayName = name?.trim() || email.split('@')[0]
-
-  const tabs: { href: string; label: string; count?: number }[] = [
-    { href: '/profile', label: 'Profile', count: profileCompleteCount },
-    { href: '/board', label: 'Board', count: boardCount },
-    { href: '/calendar', label: 'Calendar', count: calendarCount },
-  ]
 
   // Close the menu on outside click / Esc.
   useEffect(() => {
@@ -67,32 +58,20 @@ export function AppHeader({
         </Link>
 
         <nav className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-zinc-50 p-0.5">
-          {tabs.map((t) => {
+          {TABS.map((t) => {
             const isActive = pathname === t.href || pathname.startsWith(`${t.href}/`)
-            const showCount = typeof t.count === 'number' && t.count > 0
             return (
               <Link
                 key={t.href}
                 href={t.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition sm:text-sm ${
+                className={`rounded-full px-3 py-1 text-xs font-medium transition sm:text-sm ${
                   isActive
                     ? 'bg-zinc-900 text-white shadow-sm'
                     : 'text-zinc-600 hover:text-zinc-900'
                 }`}
               >
-                <span>{t.label}</span>
-                {showCount && (
-                  <span
-                    className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-zinc-200 text-zinc-700'
-                    }`}
-                  >
-                    {t.count}
-                  </span>
-                )}
+                {t.label}
               </Link>
             )
           })}

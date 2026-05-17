@@ -523,7 +523,7 @@ function Step2({
       {TERM_ORDER.map((term) =>
         grouped[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
-            <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-midnight sm:text-base">
               {TERM_LABELS[term]}
             </h3>
             <ul className="flex flex-col divide-y divide-midnight/10">
@@ -615,7 +615,7 @@ function Step4({
       {TERM_ORDER.map((term) =>
         unassignedByTerm[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
-            <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-midnight sm:text-base">
               {TERM_LABELS[term]}
             </h3>
             <ul className="flex flex-col divide-y divide-midnight/10">

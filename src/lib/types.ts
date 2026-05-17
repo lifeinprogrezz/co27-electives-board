@@ -1,4 +1,4 @@
-export type Term = 'summer' | 'september' | 'term4'
+export type Term = 'summer' | 'september' | 'term4' | 'term5'
 export type Slot = 'AM' | 'PM' | 'AM+PM' | 'online' | 'fri-pm' | 'special'
 export type ListingType = 'have_want_drop' | 'want_add'
 export type ListingStatus = 'active' | 'closed'
@@ -36,4 +36,7 @@ export const TERM_LABELS: Record<Term, string> = {
   summer: 'Summer (Jun–Jul)',
   september: 'September Intensive',
   term4: 'Term 4 (Oct–Dec)',
+  term5: 'Term 5 (Jan–Mar)',
 }
+
+export const TERM_ORDER: readonly Term[] = ['summer', 'september', 'term4', 'term5'] as const

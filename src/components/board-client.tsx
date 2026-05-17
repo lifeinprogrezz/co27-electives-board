@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { TERM_LABELS, type Term } from '@/lib/types'
+import { TERM_LABELS, TERM_ORDER, type Term } from '@/lib/types'
 import { closeListing, deleteListing } from '@/lib/listings'
 
 export interface BoardCourse {
@@ -134,7 +134,7 @@ export function BoardClient({
   const totalAdds = listings.filter((l) => l.type === 'want_add').length
 
   const coursesByTerm = useMemo(() => {
-    const m: Record<Term, BoardCourse[]> = { summer: [], september: [], term4: [] }
+    const m: Record<Term, BoardCourse[]> = { summer: [], september: [], term4: [], term5: [] }
     for (const c of courses) m[c.term].push(c)
     return m
   }, [courses])
@@ -181,7 +181,7 @@ export function BoardClient({
             className={`${fieldClass} appearance-none pr-9`}
           >
             <option value="all">All courses</option>
-            {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+            {TERM_ORDER.map((term) =>
               coursesByTerm[term].length === 0 ? null : (
                 <optgroup key={term} label={TERM_LABELS[term]}>
                   {coursesByTerm[term].map((c) => (
@@ -221,7 +221,7 @@ export function BoardClient({
         </p>
       ) : (
         <div className="flex flex-col gap-6">
-          {(['summer', 'september', 'term4'] as Term[]).map((term) => {
+          {TERM_ORDER.map((term) => {
             const inTerm = filteredCourses.filter((c) => c.term === term)
             if (inTerm.length === 0) return null
             return (

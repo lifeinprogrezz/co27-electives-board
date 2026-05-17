@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react'
 import { saveProfile, type SaveProfileState } from '@/lib/profile'
-import { TERM_LABELS, type Course, type Term } from '@/lib/types'
+import { TERM_LABELS, TERM_ORDER, type Course, type Term } from '@/lib/types'
 import { MissingCourseLink } from '@/components/feedback-modal'
 
 const DRAFT_KEY = 'co27-profile-draft-v1'
@@ -130,7 +130,7 @@ export function ProfileForm({
   }
 
   const grouped = useMemo(() => {
-    const m: Record<Term, Course[]> = { summer: [], september: [], term4: [] }
+    const m: Record<Term, Course[]> = { summer: [], september: [], term4: [], term5: [] }
     for (const c of courses) m[c.term].push(c)
     return m
   }, [courses])
@@ -140,7 +140,7 @@ export function ProfileForm({
     [courses, assigned],
   )
   const unassignedByTerm = useMemo(() => {
-    const m: Record<Term, Course[]> = { summer: [], september: [], term4: [] }
+    const m: Record<Term, Course[]> = { summer: [], september: [], term4: [], term5: [] }
     for (const c of courses) if (!assigned.has(c.id)) m[c.term].push(c)
     return m
   }, [courses, assigned])
@@ -520,7 +520,7 @@ function Step2({
       <CountBadge count={count} label="selected" tone="neutral" />
       <MissingCourseLink />
 
-      {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+      {TERM_ORDER.map((term) =>
         grouped[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
             <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">
@@ -612,7 +612,7 @@ function Step4({
       <CountBadge count={count} label="to add" tone="add" />
       <MissingCourseLink />
 
-      {(['summer', 'september', 'term4'] as Term[]).map((term) =>
+      {TERM_ORDER.map((term) =>
         unassignedByTerm[term].length === 0 ? null : (
           <div key={term} className="flex flex-col gap-2">
             <h3 className="mt-2 text-[11px] font-medium uppercase tracking-wider text-ink/60">

@@ -6,7 +6,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react'
 import { sendFeedback, type FeedbackState } from '@/lib/feedback'
@@ -56,10 +55,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
     sendFeedback,
     undefined,
   )
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-
   useEffect(() => {
-    textareaRef.current?.focus()
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
@@ -85,7 +81,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
       aria-modal="true"
       aria-labelledby="feedback-title"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/40 px-3 pb-3 pt-12 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/40 p-4 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -123,7 +119,6 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         ) : (
           <form action={action} className="flex flex-col gap-3 px-4 py-3">
             <textarea
-              ref={textareaRef}
               name="message"
               required
               minLength={1}

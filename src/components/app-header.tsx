@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { signOut } from '@/lib/auth'
+import { useFeedback } from '@/components/feedback-modal'
 
 interface Props {
   name: string | null
@@ -25,6 +26,7 @@ export function AppHeader({ name, email }: Props) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const { open: openFeedback } = useFeedback()
   const initial = initialFor(name, email)
   const displayName = name?.trim() || email.split('@')[0]
 
@@ -95,6 +97,17 @@ export function AppHeader({ name, email }: Props) {
                 <p className="truncate font-medium text-midnight">{displayName}</p>
                 <p className="truncate text-[11px] text-ink/60">{email}</p>
               </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openFeedback()
+                }}
+                className="block w-full border-t border-midnight/10 px-3 py-2 text-left text-midnight hover:bg-jordy/15"
+              >
+                Send feedback
+              </button>
               <form action={signOut} role="menuitem" className="border-t border-midnight/10">
                 <button
                   type="submit"

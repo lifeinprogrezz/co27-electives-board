@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { saveProfile, type SaveProfileState } from '@/lib/profile'
 import { TERM_LABELS, type Course, type Term } from '@/lib/types'
+import { MissingCourseLink } from '@/components/feedback-modal'
 
 const DRAFT_KEY = 'co27-profile-draft-v1'
 
@@ -517,6 +518,7 @@ function Step2({
       />
 
       <CountBadge count={count} label="selected" tone="neutral" />
+      <MissingCourseLink />
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         grouped[term].length === 0 ? null : (
@@ -608,6 +610,7 @@ function Step4({
       />
 
       <CountBadge count={count} label="to add" tone="add" />
+      <MissingCourseLink />
 
       {(['summer', 'september', 'term4'] as Term[]).map((term) =>
         unassignedByTerm[term].length === 0 ? null : (

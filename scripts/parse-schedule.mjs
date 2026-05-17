@@ -28,10 +28,11 @@ const MONTHS = {
 }
 
 const TERM_YEAR = {
-  // Co27 academic year 2026
+  // Co27 academic year — terms 4 and earlier in 2026, term 5 spills into 2027.
   summer: 2026,
   september: 2026,
   term4: 2026,
+  term5: 2027,
 }
 
 /**

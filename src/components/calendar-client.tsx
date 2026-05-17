@@ -32,6 +32,9 @@ const MONTHS: MonthDef[] = [
   { name: 'October', year: 2026, monthIdx: 9 },
   { name: 'November', year: 2026, monthIdx: 10 },
   { name: 'December', year: 2026, monthIdx: 11 },
+  { name: 'January', year: 2027, monthIdx: 0 },
+  { name: 'February', year: 2027, monthIdx: 1 },
+  { name: 'March', year: 2027, monthIdx: 2 },
 ]
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']

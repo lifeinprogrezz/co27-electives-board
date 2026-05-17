@@ -226,7 +226,7 @@ export function BoardClient({
             if (inTerm.length === 0) return null
             return (
               <section key={term} className="flex flex-col gap-3">
-                <h2 className="text-[11px] font-medium uppercase tracking-wider text-ink/60">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-midnight sm:text-base">
                   {TERM_LABELS[term]}
                 </h2>
                 <div className="flex flex-col gap-3">

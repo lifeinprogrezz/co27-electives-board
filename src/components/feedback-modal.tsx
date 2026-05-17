@@ -33,7 +33,7 @@ export function MissingCourseLink() {
       onClick={open}
       className="self-start text-xs text-ink/70 underline decoration-dotted underline-offset-4 transition hover:text-midnight"
     >
-      Don&rsquo;t see your course? Send feedback →
+      Don’t see your course? Send feedback →
     </button>
   )
 }
@@ -100,7 +100,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
               Send feedback
             </h2>
             <p className="text-xs leading-snug text-ink/70">
-              Missing electives, bugs, ideas — anything. I read every message.
+              Missing electives, bugs, ideas, anything. I read every message.
             </p>
           </div>
           <button
@@ -117,7 +117,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col items-center gap-1 px-4 py-7 text-center">
             <p className="font-serif text-xl text-midnight">Thanks 🙏</p>
             <p className="text-sm text-ink/70">
-              Got it. I&rsquo;ll take a look.
+              Got it. I’ll take a look.
             </p>
           </div>
         ) : (

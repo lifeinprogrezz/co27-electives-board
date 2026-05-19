@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1240" />
+<title>Co27 Electives Trading Board · Validation snapshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --midnight: #002d73;
+    --midnight-soft: #0a3a85;
+    --robroy: #efbe73;
+    --robroy-deep: #c8973f;
+    --jordy: #73beef;
+    --ink: #3a4a66;
+    --paper: #fbf6ec;
+    --card: #ffffff;
+    --line: rgba(0,45,115,0.10);
+    --line-strong: rgba(0,45,115,0.18);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background:
+      radial-gradient(900px 500px at 92% -8%, rgba(239,190,115,0.32), transparent 60%),
+      radial-gradient(700px 500px at -8% 108%, rgba(115,190,239,0.22), transparent 60%),
+      var(--paper);
+    color: var(--ink);
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 36px 48px 40px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--midnight);
+    background: rgba(239,190,115,0.30);
+    border: 1px solid rgba(200,151,63,0.4);
+    padding: 5px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #1f9d55;
+    box-shadow: 0 0 0 3px rgba(31,157,85,0.18);
+  }
+  h1 {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 36px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--midnight);
+    margin: 0;
+  }
+  h1 em { font-style: normal; color: var(--robroy-deep); }
+  .h-tag {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .h-tag .product { font-weight: 600; color: var(--midnight); font-size: 13px; }
+  .h-tag .when { opacity: 0.7; }
+
+  /* Section labels */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--midnight);
+    opacity: 0.7;
+    margin: 0 0 12px;
+  }
+
+  /* Funnel */
+  .funnel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+  }
+  .funnel-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1.1fr;
+    align-items: center;
+    gap: 10px;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stage .v {
+    font-family: 'Instrument Serif', serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 46px;
+    line-height: 0.95;
+    color: var(--midnight);
+    letter-spacing: -0.02em;
+  }
+  .stage.last .v { color: var(--robroy-deep); }
+  .stage .lbl {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--midnight);
+    opacity: 0.7;
+  }
+  .stage .meta {
+    font-size: 12px;
+    color: var(--ink);
+    opacity: 0.75;
+  }
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--robroy-deep);
+    font-size: 12px;
+    font-weight: 600;
+    gap: 2px;
+  }
+  .arrow .pct { font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600; line-height: 1; color: var(--robroy-deep); letter-spacing: 0.02em; }
+  .arrow .glyph { font-size: 18px; color: var(--ink); opacity: 0.5; }
+
+  /* Metric row */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .metric {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .metric .tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--robroy-deep);
+  }
+  .metric .v {
+    font-family: 'Instrument Serif', serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--midnight);
+    letter-spacing: -0.02em;
+  }
+  .metric .v em { font-style: normal; color: var(--robroy-deep); }
+  .metric .desc {
+    font-size: 12px;
+    color: var(--ink);
+    line-height: 1.4;
+    opacity: 0.85;
+  }
+  .metric .desc strong { color: var(--midnight); font-weight: 600; }
+
+  /* Two-column row */
+  .panels {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 14px;
+    margin-bottom: 0;
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+  }
+  .panel h2 {
+    font-family: 'Geist', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0 0 2px;
+    color: var(--midnight);
+    letter-spacing: -0.01em;
+  }
+  .panel .h-sub {
+    font-size: 12px;
+    color: var(--ink);
+    opacity: 0.7;
+    margin-bottom: 16px;
+  }
+
+  /* Chart */
+  .chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    align-items: center;
+    gap: 14px;
+  }
+  .row .day {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--midnight);
+  }
+  .row .day .date {
+    display: block;
+    font-size: 10px;
+    color: var(--ink);
+    opacity: 0.65;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .bars { display: flex; flex-direction: column; gap: 4px; }
+  .bar {
+    height: 16px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: var(--paper);
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 24px;
+  }
+  .bar.signups { background: linear-gradient(90deg, var(--midnight) 0%, var(--midnight-soft) 100%); }
+  .bar.listings { background: linear-gradient(90deg, var(--robroy) 0%, var(--robroy-deep) 100%); color: var(--midnight); }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--ink);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 9px; height: 9px; border-radius: 3px; }
+  .sw-signups { background: var(--midnight); }
+  .sw-listings { background: var(--robroy-deep); }
+
+  /* Demand mix */
+  .splitbar {
+    display: flex;
+    height: 42px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .splitbar .seg {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: var(--paper);
+    font-weight: 600;
+    font-size: 12px;
+    gap: 6px;
+  }
+  .seg-want { background: linear-gradient(90deg, var(--midnight) 0%, var(--midnight-soft) 100%); }
+  .seg-have { background: linear-gradient(90deg, var(--robroy-deep) 0%, var(--robroy) 100%); color: var(--midnight); }
+  .seg .pct { font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 700; line-height: 1; }
+  .mix-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .mix-legend strong {
+    color: var(--midnight);
+    display: block;
+    font-size: 12px;
+    margin-bottom: 1px;
+  }
+  .insight {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line-strong);
+    font-size: 12px;
+    color: var(--midnight);
+    line-height: 1.5;
+  }
+  .insight em {
+    font-family: 'Geist', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--robroy-deep);
+  }
+</style>
+</head>
+<body>
+  <main class="page">
+
+    <div class="header">
+      <div>
+        <h1>Funnel held. <em>Demand compounded.</em></h1>
+      </div>
+      <div class="h-tag">
+        <span class="product">Co27 Electives Trading Board</span>
+      </div>
+    </div>
+
+    <!-- Funnel -->
+    <section class="funnel">
+      <div class="section-label">Acquisition → activation funnel</div>
+      <div class="funnel-grid">
+        <div class="stage">
+          <div class="v">160</div>
+          <div class="lbl">Cohort</div>
+          <div class="meta">Co27 MBA full-time</div>
+        </div>
+        <div class="arrow"><span class="pct">31%</span><span class="glyph">→</span></div>
+        <div class="stage">
+          <div class="v">50</div>
+          <div class="lbl">Signed in</div>
+          <div class="meta">organic, 2 WhatsApp drops</div>
+        </div>
+        <div class="arrow"><span class="pct">86%</span><span class="glyph">→</span></div>
+        <div class="stage">
+          <div class="v">43</div>
+          <div class="lbl">Onboarded</div>
+          <div class="meta">profile + assigned electives</div>
+        </div>
+        <div class="arrow"><span class="pct">98%</span><span class="glyph">→</span></div>
+        <div class="stage">
+          <div class="v">42</div>
+          <div class="lbl">Posted</div>
+          <div class="meta">at least one listing</div>
+        </div>
+        <div class="arrow"><span class="pct">4.8×</span><span class="glyph">→</span></div>
+        <div class="stage last">
+          <div class="v">203</div>
+          <div class="lbl">Listings</div>
+          <div class="meta">posted across 3 days</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key metrics -->
+    <section class="metrics">
+      <div class="metric">
+        <span class="tag">Activation</span>
+        <div class="v"><em>86%</em></div>
+        <div class="desc"><strong>Sign-in to onboarded.</strong> Held steady as the cohort grew. The flow scales without a drop-off.</div>
+      </div>
+      <div class="metric">
+        <span class="tag">Engagement depth</span>
+        <div class="v"><em>4.8</em></div>
+        <div class="desc"><strong>Listings per active user.</strong> Repeat use, not one-shot posting.</div>
+      </div>
+      <div class="metric">
+        <span class="tag">Decision-day peak</span>
+        <div class="v"><em>112</em></div>
+        <div class="desc"><strong>Listings on Day 3.</strong> Usage peaked on the day add/drop opened. The board got used at decision time.</div>
+      </div>
+    </section>
+
+    <!-- Two-col: adoption curve + demand signal -->
+    <section class="panels">
+      <div class="panel">
+        <h2>Adoption curve</h2>
+        <div class="h-sub">Signups vs. listings live now, in launch-relative 24h windows. Sat 18:18 = T+0.</div>
+        <div class="chart">
+          <div class="row">
+            <div class="day">Day 1<span class="date">Sat 18:18 → Sun</span></div>
+            <div class="bars">
+              <div class="bar signups" style="width: 15.2%;">17</div>
+              <div class="bar listings" style="width: 9.8%;">11</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="day">Day 2<span class="date">Sun → Mon</span></div>
+            <div class="bars">
+              <div class="bar signups" style="width: 15.2%;">17</div>
+              <div class="bar listings" style="width: 71.4%;">80</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="day">Day 3<span class="date">Mon → Tue · add/drop day</span></div>
+            <div class="bars">
+              <div class="bar signups" style="width: 13.4%;">15</div>
+              <div class="bar listings" style="width: 100%;">112</div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <span><span class="swatch sw-signups"></span>New signups</span>
+          <span><span class="swatch sw-listings"></span>Listings posted</span>
+          <span style="margin-left:auto;opacity:0.6;">scale: max = 112</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Demand signal</h2>
+        <div class="h-sub">Mix of active listings. What the market is asking for.</div>
+        <div class="splitbar">
+          <div class="seg seg-want" style="flex: 142;"><span class="pct">74%</span> Want&nbsp;to&nbsp;add</div>
+          <div class="seg seg-have" style="flex: 51;"><span class="pct">26%</span> Have / drop</div>
+        </div>
+        <div class="mix-legend">
+          <div><strong>142 want-to-add</strong>Demand for a specific seat.</div>
+          <div><strong>51 have / drop</strong>Supply willing to swap.</div>
+        </div>
+        <div class="insight">
+          <em>2.8:1 demand-to-supply.</em> The asymmetry widened as more users joined. Add/drop opened into 142 explicit, named asks. Exactly the signal a WhatsApp thread can't surface.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

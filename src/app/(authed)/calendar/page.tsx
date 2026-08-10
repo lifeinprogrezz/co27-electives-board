@@ -90,7 +90,7 @@ export default async function CalendarPage() {
           your <span className="text-robroy-deep">calendar</span>.
         </h1>
         <p className="text-sm leading-relaxed text-ink">
-          June to December 2026. Drops in gold, adds in midnight, kept in sky.
+          June 2026 to March 2027. Drops in gold, adds in midnight, kept in sky.
         </p>
       </div>
 

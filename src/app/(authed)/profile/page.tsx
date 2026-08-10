@@ -30,10 +30,15 @@ export default async function ProfilePage() {
   const courses = (coursesResult.data ?? []) as Course[]
   const listings = listingsResult.data ?? []
   const hasArchived = listings.some((l) => l.status === 'closed')
-  const dropIds = listings
+  // Archived (closed) listings don't pre-check the form: the new window starts
+  // from a blank slate and people re-enter what's actually true now.
+  const activeListings = listings.filter((l) => l.status === 'active')
+  const dropIds = activeListings
     .filter((l) => l.type === 'have_want_drop')
     .map((l) => l.course_id)
-  const addIds = listings.filter((l) => l.type === 'want_add').map((l) => l.course_id)
+  const addIds = activeListings
+    .filter((l) => l.type === 'want_add')
+    .map((l) => l.course_id)
   const assignedIds = profile?.assigned_course_ids ?? []
 
   const initialName =
@@ -45,9 +50,9 @@ export default async function ProfilePage() {
     <>
       {hasArchived && (
         <p className="mb-4 rounded-xl border border-robroy-deep/50 bg-robroy/25 px-3 py-2 text-sm text-midnight">
-          Your spring listings were archived for the new trading window — they're
-          hidden from the board. Your marks below are untouched: untick anything
-          that no longer applies, then hit Save to repost the rest.
+          New trading window: your spring marks were archived and your selections
+          reset, since schedules changed over the summer. Re-select your assigned
+          courses and what you want to drop or add, then hit Save.
         </p>
       )}
       <ProfileForm

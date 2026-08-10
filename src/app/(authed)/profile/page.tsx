@@ -24,11 +24,12 @@ export default async function ProfilePage() {
       .select('id, class_code, name, ects, professor, term, schedule_text, slot, notes')
       .order('term')
       .order('schedule_text'),
-    supabase.from('listings').select('course_id, type').eq('user_id', authUser.id),
+    supabase.from('listings').select('course_id, type, status').eq('user_id', authUser.id),
   ])
 
   const courses = (coursesResult.data ?? []) as Course[]
   const listings = listingsResult.data ?? []
+  const hasArchived = listings.some((l) => l.status === 'closed')
   const dropIds = listings
     .filter((l) => l.type === 'have_want_drop')
     .map((l) => l.course_id)
@@ -41,7 +42,15 @@ export default async function ProfilePage() {
   const isOnboarded = Boolean(profile?.name?.trim())
 
   return (
-    <ProfileForm
+    <>
+      {hasArchived && (
+        <p className="mb-4 rounded-xl border border-robroy-deep/50 bg-robroy/25 px-3 py-2 text-sm text-midnight">
+          Your spring listings were archived for the new trading window — they're
+          hidden from the board. Your marks below are untouched: untick anything
+          that no longer applies, then hit Save to repost the rest.
+        </p>
+      )}
+      <ProfileForm
       isReturning={isOnboarded}
       initialName={initialName}
       initialWhatsapp={profile?.whatsapp_number ?? ''}
@@ -50,5 +59,6 @@ export default async function ProfilePage() {
       initialAddIds={addIds}
       courses={courses}
     />
+    </>
   )
 }
